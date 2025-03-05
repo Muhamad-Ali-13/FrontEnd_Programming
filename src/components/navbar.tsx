@@ -1,12 +1,48 @@
 // components/Navbar.js
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const transactionRef = useRef(null);
+  const profileRef = useRef(null);
+
+  // Effect untuk menutup dropdown Transaction saat klik di luar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (transactionRef.current && !transactionRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
+  // Effect untuk menutup dropdown Profile saat klik di luar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    if (isProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileOpen]);
 
   return (
     <nav className="bg-gray-800">
@@ -39,34 +75,37 @@ export default function Navbar() {
             >
               User
             </Link>
-            <div className="relative">
+            {/* Transaction Dropdown */}
+            <div className="relative" ref={transactionRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium focus:outline-none transition duration-300 ease-in-out"
               >
                 Transaction
               </button>
-              {isDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg"
-                >
-                  <Link
-                    href="/transactions/booking"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-500 hover:text-white transition duration-300 ease-in-out"
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg"
                   >
-                    Booking
-                  </Link>
-                </motion.div>
-              )}
+                    <Link
+                      href="/transaksi"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-500 hover:text-white transition duration-300 ease-in-out"
+                    >
+                      Booking
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
           {/* Right Section (Profile Icon with Dropdown) */}
-          <div className="flex items-center relative">
+          <div className="flex items-center relative" ref={profileRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="text-gray-300 hover:bg-gray-700 hover:text-white p-2 rounded-full focus:outline-none transition duration-300 ease-in-out"
