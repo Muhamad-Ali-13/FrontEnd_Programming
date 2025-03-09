@@ -1,168 +1,124 @@
-// pages/transactions.js
 'use client';
-import { useState } from 'react';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import SearchBar from '../../components/SearchBar';
+import TransactionTable from '../../components/TransactionTable';
+import Pagination from '../../components/Pagination';
+import TransactionModal from '../../components/TransactionModal';
 
-export default function Transactions() {
-  // Data for Transactions
-  const [transactions] = useState([
-    {
-      id: 1,
-      room: 'Deluxe Room',
-      guest: 'John Doe',
-      checkIn: '2023-10-01',
-      checkOut: '2023-10-05',
-      status: 'Confirmed',
-      total: '$600',
-    },
-    {
-      id: 2,
-      room: 'Standard Room',
-      guest: 'Jane Smith',
-      checkIn: '2023-10-02',
-      checkOut: '2023-10-04',
-      status: 'Checked In',
-      total: '$400',
-    },
-    {
-      id: 3,
-      room: 'Suite Room',
-      guest: 'Emily Davis',
-      checkIn: '2023-10-03',
-      checkOut: '2023-10-07',
-      status: 'Cancelled',
-      total: '$1000',
-    },
-    {
-      id: 4,
-      room: 'Family Room',
-      guest: 'Michael Brown',
-      checkIn: '2023-10-05',
-      checkOut: '2023-10-10',
-      status: 'Confirmed',
-      total: '$800',
-    },
-  ]);
-
-  // State for Search Filter
+export default function TransactionsPage() {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const itemsPerPage = 5;
 
-  // State for Validation Popup
-  const [showValidationPopup, setShowValidationPopup] = useState(false);
+  // Fetch transactions and rooms data
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/transactions').then((res) => res.json()),
+      fetch('/api/rooms').then((res) => res.json()),
+    ]).then(([transactionsData, roomsData]) => {
+      setTransactions(transactionsData);
+      setRooms(roomsData);
+    });
+  }, []);
 
-  // Function to handle adding a transaction
-  const handleAddTransaction = () => {
-    // Simulate validation success
-    setShowValidationPopup(true);
-    setTimeout(() => setShowValidationPopup(false), 3000); // Hide popup after 3 seconds
-  };
-
-  // Filter Transactions Based on Search Term
-  const filteredTransactions = transactions.filter((transaction) =>
-    transaction.guest.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter data based on search term (by bookedBy)
+  const filteredTransactions = transactions.filter((t) =>
+    t.bookedBy.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Paginate data
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredTransactions.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Save transaction (create/update)
+  const handleSaveTransaction = (newTransaction: any) => {
+    if (selectedTransaction) {
+      // Update existing transaction
+      fetch(`/api/transactions?id=${selectedTransaction.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTransaction),
+      }).then(() => {
+        setTransactions((prev) =>
+          prev.map((t) => (t.id === selectedTransaction.id ? { ...t, ...newTransaction } : t))
+        );
+      });
+    } else {
+      // Create new transaction
+      fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTransaction),
+      })
+        .then((res) => res.json())
+        .then((data) => setTransactions([...transactions, data]));
+    }
+    setIsModalOpen(false);
+  };
+
+  // Delete transaction
+  const handleDelete = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      fetch(`/api/transactions?id=${id}`, { method: 'DELETE' }).then(() => {
+        setTransactions((prev) => prev.filter((t) => t.id !== id));
+      });
+    }
+  };
+
   return (
-    <div>
-      {/* Validation Popup */}
-      {showValidationPopup && (
-        <motion.div
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 100 }}
-          transition={{ duration: 0.3 }}
-          className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50"
-        >
-          Transaction added successfully!
-        </motion.div>
-      )}
+    <div className="p-8 bg-gray-100 min-h-screen">
+    <h1 className="text-3xl font-bold text-center mb-6 text-gray-600">
+      Daftar Booking
+    </h1>
 
-      {/* Main Content */}
-      <div className="p-6">
-        {/* Header */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Transactions</h1>
+    <div className="p-6">
+      {/* Search Bar */}
+      <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
 
-        {/* Search Bar and Add Button */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-          <input
-            type="text"
-            placeholder="Search by guest name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full md:w-1/2 p-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 mb-4 md:mb-0"
-          />
-          <button
-            onClick={handleAddTransaction}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition duration-300 ease-in-out"
-          >
-            Add Transaction
-          </button>
-        </div>
+      {/* Add Button */}
+      <button
+        onClick={() => {
+          setSelectedTransaction(null);
+          setIsModalOpen(true);
+        }}
+        className="bg-green-500 text-white px-4 py-2 rounded-md mb-4"
+      >
+        Tambah Transaksi
+      </button>
 
-        {/* Transactions Table */}
-        <div className="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Room
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Guest
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Check-In
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Check-Out
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTransactions.map((transaction) => (
-                <tr key={transaction.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.room}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.guest}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.checkIn}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.checkOut}</td>
-                  <td
-                    className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      transaction.status === 'Confirmed'
-                        ? 'text-green-600'
-                        : transaction.status === 'Checked In'
-                        ? 'text-blue-600'
-                        : 'text-red-600'
-                    }`}
-                  >
-                    {transaction.status}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{transaction.total}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 space-x-2">
-                    <Link href={`/transactions/${transaction.id}`}>
-                      <button className="text-indigo-600 hover:text-indigo-900 transition duration-300">
-                        View Details
-                      </button>
-                    </Link>
-                    <button className="text-red-600 hover:text-red-900 transition duration-300">
-                      Cancel
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Modal */}
+      <TransactionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSaveTransaction}
+        initialData={selectedTransaction}
+        rooms={rooms}
+      />
+
+      {/* Table */}
+      <TransactionTable
+        transactions={currentItems}
+        rooms={rooms}
+        onEdit={(transaction) => {
+          setSelectedTransaction(transaction);
+          setIsModalOpen(true);
+        }}
+        onDelete={handleDelete}
+      />
+
+      {/* Pagination */}
+      <Pagination
+        totalItems={filteredTransactions.length}
+        itemsPerPage={itemsPerPage}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
+    </div>
     </div>
   );
 }

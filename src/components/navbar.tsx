@@ -7,13 +7,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const transactionRef = useRef(null);
-  const profileRef = useRef(null);
+  const transactionRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   // Effect untuk menutup dropdown Transaction saat klik di luar
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (transactionRef.current && !transactionRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (transactionRef.current && !transactionRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
     };
@@ -29,8 +29,8 @@ export default function Navbar() {
 
   // Effect untuk menutup dropdown Profile saat klik di luar
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
       }
     };

@@ -1,150 +1,159 @@
-// pages/rooms.js
-'use client';
-import Link from 'next/link';
+"use client";
+import { useState, useEffect } from "react";
+import SearchBar from "../../components/SearchBar";
+import RoomTable from "../../components/RoomTable";
+import Pagination from "../../components/Pagination"; // Ensure this path is correct or update it to the correct path
+import RoomModal from "../../components/RoomsModal";
 
-export default function Rooms() {
-  // Data for Room Types
-  const roomTypes = [
-    {
-      id: 1,
-      name: 'Standard Room',
-      image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$100/night',
-      rating: 4,
-      description:
-        'A cozy and comfortable room with basic amenities, perfect for solo travelers or couples.',
-    },
-    {
-      id: 2,
-      name: 'Deluxe Room',
-      image: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$150/night',
-      rating: 5,
-      description:
-        'A luxurious room with a stunning view, equipped with modern amenities and a spacious layout.',
-    },
-    {
-      id: 3,
-      name: 'Suite Room',
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$250/night',
-      rating: 5,
-      description:
-        'An exclusive suite with premium furnishings, a private balcony, and access to VIP services.',
-    },
-    {
-      id: 4,
-      name: 'Family Room',
-      image: 'https://images.unsplash.com/photo-1571008520329-0d5c6d31fa0f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$200/night',
-      rating: 4,
-      description:
-        'A spacious room designed for families, featuring multiple beds and a living area.',
-    },
-    {
-      id: 4,
-      name: 'Suite Room',
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$250/night',
-      rating: 5,
-      description:
-        'An exclusive suite with premium furnishings, a private balcony, and access to VIP services.',
-    },
-    {
-      id: 5,
-      name: 'Suite Room',
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$250/night',
-      rating: 5,
-      description:
-        'An exclusive suite with premium furnishings, a private balcony, and access to VIP services.',
-    },
-    {
-      id: 6,
-      name: 'Suite Room',
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$250/night',
-      rating: 5,
-      description:
-        'An exclusive suite with premium furnishings, a private balcony, and access to VIP services.',
-    },
-    {
-      id: 7,
-      name: 'Suite Room',
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$250/night',
-      rating: 5,
-      description:
-        'An exclusive suite with premium furnishings, a private balcony, and access to VIP services.',
-    },
-    {
-      id: 8,
-      name: 'Suite Room',
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$250/night',
-      rating: 5,
-      description:
-        'An exclusive suite with premium furnishings, a private balcony, and access to VIP services.',
-    },
-    {
-      id: 9,
-      name: 'Suite Room',
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$250/night',
-      rating: 5,
-      description:
-        'An exclusive suite with premium furnishings, a private balcony, and access to VIP services.',
-    },
-  ];
+export default function RoomsPage() {
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const itemsPerPage = 5;
+
+  // Fetch data from API
+  useEffect(() => {
+    fetch("/api/rooms")
+      .then((res) => res.json())
+      .then((data) => setRooms(data));
+  }, []);
+
+  // Filter data based on search term
+  const filteredRooms = rooms.filter((room) =>
+    room.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Paginate data
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredRooms.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Di halaman RoomsPage (pages/rooms/index.tsx)
+  const handleSaveRoom = (newRoom: any) => {
+    if (selectedRoom) {
+      // Update existing room
+      fetch(`/api/rooms?id=${selectedRoom.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newRoom),
+      }).then(() => {
+        setRooms((prev) =>
+          prev.map((room) =>
+            room.id === selectedRoom.id ? { ...room, ...newRoom } : room
+          )
+        );
+      });
+    } else {
+      // Create new room
+      fetch("/api/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newRoom),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          setRooms([...rooms, data]); // Perbarui state dengan data baru
+        });
+    }
+    setIsModalOpen(false);
+  };
+
+  // Approve a room dengan konfirmasi
+  const handleApprove = (id: number) => {
+    if (window.confirm("Are you sure you want to approve this room?")) {
+      fetch(`/api/rooms?id=${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Approved" }),
+      })
+        .then(() => {
+          setRooms((prev) =>
+            prev.map((room) =>
+              room.id === id ? { ...room, status: "Approved" } : room
+            )
+          );
+        })
+        .catch((err) => console.error("Error approving room:", err));
+    }
+  };
+
+  // Reject a room dengan konfirmasi
+  const handleReject = (id: number) => {
+    if (window.confirm("Are you sure you want to reject this room?")) {
+      fetch(`/api/rooms?id=${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Rejected" }),
+      })
+        .then(() => {
+          setRooms((prev) =>
+            prev.map((room) =>
+              room.id === id ? { ...room, status: "Rejected" } : room
+            )
+          );
+        })
+        .catch((err) => console.error("Error rejecting room:", err));
+    }
+  };
+
+  // Delete a room
+  const handleDelete = (id: number) => {
+    fetch(`/api/rooms?id=${id}`, { method: "DELETE" }).then(() => {
+      setRooms((prev) => prev.filter((room) => room.id !== id));
+    });
+  };
 
   return (
-    <div>
-      {/* Main Content */}
-      <div className="p-6">
-        {/* Header */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Our Rooms</h1>
+    <div className="p-8 bg-gray-100 min-h-screen">
+    <h1 className="text-3xl font-bold text-center mb-6 text-gray-600">
+      Daftar Room
+    </h1>
 
-        {/* Room List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {roomTypes.map((room) => (
-            <div key={room.id} className="bg-white p-6 rounded-lg shadow-md">
-              {/* Image */}
-              <img
-                src={room.image}
-                alt={room.name}
-                className="w-full h-48 object-cover rounded-md mb-4"
-              />
-              {/* Name and Price */}
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="text-lg font-semibold text-gray-800">{room.name}</h2>
-                <p className="text-indigo-600 font-bold">{room.price}</p>
-              </div>
-              {/* Rating */}
-              <div className="flex items-center mb-2">
-                {[...Array(room.rating)].map((_, index) => (
-                  <svg
-                    key={index}
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-yellow-500"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              {/* Description */}
-              <p className="text-gray-600 text-sm mb-4">{room.description}</p>
-              {/* Book Now Button */}
-              <Link href="/book-now">
-                <button className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-300">
-                  Book Now
-                </button>
-              </Link>
-            </div>
-          ))}
-        </div>
-      </div>
+    <div className="p-6">
+      {/* Search Bar */}
+      <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+
+      {/* Add Button */}
+      <button
+        onClick={() => {
+          setSelectedRoom(null);
+          setIsModalOpen(true);
+        }}
+        className="bg-green-500 text-white px-4 py-2 rounded-md mb-4"
+      >
+        Tambah Ruangan
+      </button>
+
+      {/* Modal */}
+      <RoomModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSaveRoom}
+        initialData={selectedRoom}
+      />
+
+      {/* Table */}
+      <RoomTable
+        rooms={currentItems}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onEdit={(room) => {
+          setSelectedRoom(room);
+          setIsModalOpen(true);
+        }}
+        onDelete={handleDelete}
+      />
+
+      {/* Pagination */}
+      <Pagination
+        totalItems={filteredRooms.length}
+        itemsPerPage={itemsPerPage}
+        currentPage={currentPage}
+        onPageChange={setCurrentPage}
+      />
+    </div>
     </div>
   );
 }
