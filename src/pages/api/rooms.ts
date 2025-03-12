@@ -11,7 +11,7 @@ interface Room {
 
 // Simpan data di backend (in-memory)
 let rooms: Room[] = [
-  { id: 1, name: 'Room A', capacity: 10, category: 'Meeting', price: 50, status: 'Pending' },
+  { id: 1, name: 'Room A', capacity: 10, category: 'Meeting', price: 50, status: 'Draft' },
   { id: 2, name: 'Room B', capacity: 20, category: 'Conference', price: 100, status: 'Approved' },
 ];
 

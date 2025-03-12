@@ -19,7 +19,7 @@ const RoomModal: React.FC<RoomModalProps> = ({
     capacity: initialData?.capacity || 0,
     category: initialData?.category || "",
     price: initialData?.price || 0,
-    status: initialData?.status || "Pending", // Default ke 'Pending' untuk data baru
+    status: initialData?.status || "Draft", // Default ke 'Pending' untuk data baru
   });
 
   const handleChange = (
