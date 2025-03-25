@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 type Room = {
   id: number;
@@ -12,7 +14,7 @@ type Room = {
     | "auditorium"
     | "lainnya";
   price: number;
-  status: "available" | "approved" | "rejected";
+  status: "Available" | "approved" | "rejected";
 };
 
 const RoomManagement = () => {
@@ -33,7 +35,7 @@ const RoomManagement = () => {
     capacity: 0,
     category: "kelas",
     price: 0,
-    status: "available",
+    status: "Available",
   };
   const [modalRoom, setModalRoom] = useState<Room>(initialModalRoom);
 
@@ -41,57 +43,72 @@ const RoomManagement = () => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  // Ambil data dari rooms.json atau localStorage
+  // Ambil data dari localStorage atau sampleData
   useEffect(() => {
-    const fetchData = async () => {
+    const savedRooms = localStorage.getItem("rooms");
+    if (savedRooms) {
       try {
-        const res = await fetch("/rooms.json"); // Pastikan file ada di /public/rooms.json
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
+        const parsedRooms = JSON.parse(savedRooms);
+        if (Array.isArray(parsedRooms)) {
+          setRooms(parsedRooms);
         }
-        const data = await res.json();
-        setRooms(data);
-        localStorage.setItem("rooms", JSON.stringify(data)); // Simpan ke localStorage sebagai fallback
       } catch (error) {
-        console.error("Error fetching rooms.json:", error);
-        // Gunakan data dari localStorage jika rooms.json gagal dimuat
-        const savedRooms = localStorage.getItem("rooms");
-        if (savedRooms) {
-          try {
-            const parsedRooms = JSON.parse(savedRooms);
-            if (Array.isArray(parsedRooms)) {
-              setRooms(parsedRooms);
-            }
-          } catch (parseError) {
-            console.error("Error parsing data from localStorage:", parseError);
-          }
-        } else {
-          // Jika tidak ada data di localStorage, gunakan sampleData
-          const sampleData: Room[] = [
-            {
-              id: 1,
-              name: "201",
-              capacity: 40,
-              category: "kelas",
-              price: 1500000,
-              status: "available",
-            },
-            {
-              id: 2,
-              name: "202",
-              capacity: 25,
-              category: "labolatorium",
-              price: 2500000,
-              status: "available",
-            },
-          ];
-          setRooms(sampleData);
-          localStorage.setItem("rooms", JSON.stringify(sampleData));
-        }
+        console.error("Error parsing data from localStorage:", error);
       }
-    };
-
-    fetchData();
+    } else {
+      const sampleData: Room[] = [
+        {
+          "id": 1,
+          "name": "201",
+          "capacity": 40,
+          "category": "kelas",
+          "price": 1500000,
+          "status": "Available"
+        },
+        {
+          "id": 2,
+          "name": "202",
+          "capacity": 25,
+          "category": "labolatorium",
+          "price": 2500000,
+          "status": "Available"
+        },
+        {
+          "id": 3,
+          "name": "203",
+          "capacity": 100,
+          "category": "perpustakaan",
+          "price": 2000000,
+          "status": "Available"
+        },
+        {
+          "id": 4,
+          "name": "204",
+          "capacity": 300,
+          "category": "auditorium",
+          "price": 3500000,
+          "status": "Available"
+        },
+        {
+          "id": 5,
+          "name": "205",
+          "capacity": 50,
+          "category": "lainnya",
+          "price": 1800000,
+          "status": "Available"
+        },
+        {
+          "id": 6,
+          "name": "206",
+          "capacity": 10,
+          "category": "kelas",
+          "price": 2000000,
+          "status": "Available"
+        },
+      ];
+      setRooms(sampleData);
+      localStorage.setItem("rooms", JSON.stringify(sampleData));
+    }
   }, []);
 
   // Simpan data ke localStorage setiap kali ada perubahan pada rooms
@@ -163,13 +180,15 @@ const RoomManagement = () => {
     e.preventDefault();
 
     // Validasi input
-    if (
-      !modalRoom.name ||
-      !modalRoom.capacity ||
-      !modalRoom.category ||
-      !modalRoom.price
-    ) {
-      alert("Semua field harus diisi!");
+    if (!modalRoom.name || !modalRoom.capacity || !modalRoom.category || !modalRoom.price) {
+      toast.error("Semua field harus diisi!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
       return;
     }
 
@@ -178,42 +197,44 @@ const RoomManagement = () => {
       setRooms((prevRooms) =>
         prevRooms.map((room) => (room.id === modalRoom.id ? modalRoom : room))
       );
+      toast.success("Data berhasil diperbarui!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } else {
       // Tambah: Generate id baru, dan tambahkan room baru
       const newId =
         rooms.length > 0 ? Math.max(...rooms.map((r) => r.id)) + 1 : 1;
       setRooms((prevRooms) => [...prevRooms, { ...modalRoom, id: newId }]);
+      toast.success("Data berhasil disimpan!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
     closeModal();
     setModalRoom(initialModalRoom);
-  };
-
-  // Fungsi Approve dengan validasi
-  const handleApprove = (id: number) => {
-    if (confirm("Apakah Anda yakin ingin menyetujui ruangan ini?")) {
-      setRooms((prevRooms) =>
-        prevRooms.map((room) =>
-          room.id === id ? { ...room, status: "approved" } : room
-        )
-      );
-    }
-  };
-
-  // Fungsi Reject dengan validasi
-  const handleReject = (id: number) => {
-    if (confirm("Apakah Anda yakin ingin menolak ruangan ini?")) {
-      setRooms((prevRooms) =>
-        prevRooms.map((room) =>
-          room.id === id ? { ...room, status: "rejected" } : room
-        )
-      );
-    }
   };
 
   // Fungsi delete room dengan konfirmasi
   const handleDeleteRoom = (id: number) => {
     if (confirm("Apakah Anda yakin ingin menghapus ruangan ini?")) {
       setRooms((prevRooms) => prevRooms.filter((room) => room.id !== id));
+      toast.success("Ruangan berhasil dihapus!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 
@@ -321,13 +342,23 @@ const RoomManagement = () => {
                     <td className="px-6 py-4 space-y-2">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleApprove(room.id)}
+                          onClick={() =>
+                            toast.success("Ruangan disetujui!", {
+                              position: "top-right",
+                              autoClose: 3000,
+                            })
+                          }
                           className="focus:outline-none text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-3 py-1"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() => handleReject(room.id)}
+                          onClick={() =>
+                            toast.error("Ruangan ditolak!", {
+                              position: "top-right",
+                              autoClose: 3000,
+                            })
+                          }
                           className="focus:outline-none text-white bg-red-500 hover:bg-red-600 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-3 py-1"
                         >
                           Reject
@@ -487,6 +518,19 @@ const RoomManagement = () => {
             </div>
           </div>
         )}
+
+        {/* Toast Container untuk Notifikasi */}
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </div>
     </div>
   );

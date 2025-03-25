@@ -1,78 +1,135 @@
 "use client";
-
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-interface User {
+type User = {
   id: number;
   name: string;
   email: string;
-}
+};
 
-export default function Table() {
+const UserManagement = () => {
+  // State data dan modal
   const [users, setUsers] = useState<User[]>([]);
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<keyof User>("id");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // State modal (untuk tambah & edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: "", email: "" });
+  const [isEditMode, setIsEditMode] = useState(false);
+  const initialModalUser: User = {
+    id: 0,
+    name: "",
+    email: "",
+  };
+  const [modalUser, setModalUser] = useState<User>(initialModalUser);
 
-  const pageSize = 5;
+  // Modal helper functions
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
 
-  // Fetch data dari file JSON (pastikan file users.json ada di public/users.json)
+  // Ambil data dari localStorage atau sampleData
   useEffect(() => {
-    fetch("/users.json")
-      .then((res) => res.json())
-      .then((data) => setUsers(data));
+    const savedUsers = localStorage.getItem("users");
+    if (savedUsers) {
+      try {
+        const parsedUsers = JSON.parse(savedUsers);
+        if (Array.isArray(parsedUsers)) {
+          setUsers(parsedUsers);
+        }
+      } catch (error) {
+        console.error("Error parsing data from localStorage:", error);
+      }
+    } else {
+      const sampleData: User[] = [
+        {
+          id: 1,
+          name: "Ali",
+          email: "ali@gmail.com",
+        },
+        {
+          id: 2,
+          name: "Jane Smith",
+          email: "jane.smith@example.com",
+        },
+      ];
+      setUsers(sampleData);
+      localStorage.setItem("users", JSON.stringify(sampleData));
+    }
   }, []);
 
-  // Filtering data berdasarkan pencarian
-  const filteredData = useMemo(() => {
-    let filtered = users.filter(
-      (item) =>
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.email.toLowerCase().includes(search.toLowerCase())
+  // Simpan data ke localStorage setiap kali ada perubahan pada users
+  useEffect(() => {
+    localStorage.setItem("users", JSON.stringify(users));
+  }, [users]);
+
+  // Reset halaman ke 1 saat search berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Fungsi search berdasarkan semua field
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredUsers = users.filter((user) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      user.id.toString().includes(searchLower) ||
+      user.name.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower)
     );
+  });
 
-    // Sorting data
-    filtered.sort((a, b) => {
-      if (a[sortBy] < b[sortBy]) return sortOrder === "asc" ? -1 : 1;
-      if (a[sortBy] > b[sortBy]) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [search, sortBy, sortOrder, users]);
-
-  // Paginasi data
-  const paginatedData = useMemo(() => {
-    const startIndex = (page - 1) * pageSize;
-    return filteredData.slice(startIndex, startIndex + pageSize);
-  }, [filteredData, page]);
-
-  const totalPages = Math.ceil(filteredData.length / pageSize);
-
-  // Handle sorting
-  const handleSort = (field: keyof User) => {
-    if (sortBy === field) {
+  // Fungsi sorting berdasarkan field
+  const handleSort = (field: string) => {
+    if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      setSortBy(field);
+      setSortField(field);
       setSortOrder("asc");
     }
   };
 
-  // Handle modal open/close
-  const actionModal = () => {
-    setIsModalOpen(!isModalOpen);
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (!sortField) return 0;
+    const aValue = a[sortField as keyof User];
+    const bValue = b[sortField as keyof User];
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+    } else {
+      return sortOrder === "asc"
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
+    }
+  });
+
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentUsers = sortedUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+
+  // Render indikator sort pada header
+  const renderSortIndicator = (field: string) => {
+    if (sortField === field) {
+      return sortOrder === "asc" ? " ↑" : " ↓";
+    }
+    return "";
   };
 
-  // Handle submit untuk tambah data
-  const handleSubmit = () => {
-    if (!newUser.name || !newUser.email) {
-      toast.error("Nama dan Email harus diisi!", {
+  // CRUD: Tambah atau Edit User melalui modal
+  const handleModalSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    // Validasi input
+    if (!modalUser.name || !modalUser.email) {
+      toast.error("Semua field harus diisi!", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -83,172 +140,229 @@ export default function Table() {
       return;
     }
 
-    const newEntry = {
-      id: users.length + 1,
-      ...newUser,
-    };
-    setUsers([...users, newEntry]);
-    setIsModalOpen(false);
-    setNewUser({ name: "", email: "" });
+    if (isEditMode) {
+      // Edit: Update data user
+      setUsers((prevUsers) =>
+        prevUsers.map((user) => (user.id === modalUser.id ? modalUser : user))
+      );
+      toast.success("Data berhasil diperbarui!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } else {
+      // Tambah: Generate id baru, dan tambahkan user baru
+      const newId =
+        users.length > 0 ? Math.max(...users.map((u) => u.id)) + 1 : 1;
+      setUsers((prevUsers) => [...prevUsers, { ...modalUser, id: newId }]);
+      toast.success("Data berhasil disimpan!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
+    closeModal();
+    setModalUser(initialModalUser);
+  };
 
-    // Notifikasi sukses
-    toast.success("Data berhasil disimpan!", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-    });
+  // Fungsi delete user dengan konfirmasi
+  const handleDeleteUser = (id: number) => {
+    if (confirm("Apakah Anda yakin ingin menghapus pengguna ini?")) {
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+      toast.success("Pengguna berhasil dihapus!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
   };
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold text-center mb-6 text-gray-600">
-        Daftar User
+      <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
+        Daftar Pengguna
       </h1>
+      <div className="min-h-screen bg-gray-100 flex justify-center p-9">
+        <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-6xl h-full">
+          {/* Header Section */}
+          <div className="flex justify-between items-center mb-6">
+            {/* Search Input */}
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={handleSearch}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 w-full sm:w-auto"
+            />
+            {/* Add New Button */}
+            <button
+              onClick={() => {
+                setModalUser(initialModalUser);
+                setIsEditMode(false);
+                openModal();
+              }}
+              className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+            >
+              Add New User
+            </button>
+          </div>
 
-      <div className="p-6 bg-gray-100 min-h-screen">
-        {/* Button Tambah User */}
-        <button
-          onClick={actionModal}
-          className="mb-4 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800 transition duration-300"
-        >
-          Tambah User
-        </button>
-
-        {/* Input Pencarian */}
-        <input
-          type="text"
-          placeholder="Cari nama atau email..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="mb-4 p-2 border border-gray-300 rounded w-full focus:outline-none focus:border-gray-500"
-        />
-
-        {/* Tabel */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden">
-            <thead className="bg-gray-700 text-white">
-              <tr>
-                <th
-                  className="py-3 px-4 text-left font-semibold cursor-pointer"
-                  onClick={() => handleSort("id")}
-                >
-                  ID{" "}
-                  {sortBy === "id" && (
-                    <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-                  )}
-                </th>
-                <th
-                  className="py-3 px-4 text-left font-semibold cursor-pointer"
-                  onClick={() => handleSort("name")}
-                >
-                  Nama{" "}
-                  {sortBy === "name" && (
-                    <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-                  )}
-                </th>
-                <th
-                  className="py-3 px-4 text-left font-semibold cursor-pointer"
-                  onClick={() => handleSort("email")}
-                >
-                  Email{" "}
-                  {sortBy === "email" && (
-                    <span>{sortOrder === "asc" ? "↑" : "↓"}</span>
-                  )}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="py-3 px-4 border-b border-gray-200">
-                    {item.id}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-200">
-                    {item.name}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-200">
-                    {item.email}
-                  </td>
+          {/* Table Section */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left text-gray-500 bg-gray-50 border border-gray-200 rounded-lg">
+              <thead className="text-xs text-gray-700 uppercase bg-gray-100">
+                <tr>
+                  <th
+                    className="px-6 py-3 cursor-pointer select-none"
+                    onClick={() => handleSort("id")}
+                  >
+                    NO{renderSortIndicator("id")}
+                  </th>
+                  <th
+                    className="px-6 py-3 cursor-pointer select-none"
+                    onClick={() => handleSort("name")}
+                  >
+                    NAME{renderSortIndicator("name")}
+                  </th>
+                  <th
+                    className="px-6 py-3 cursor-pointer select-none"
+                    onClick={() => handleSort("email")}
+                  >
+                    EMAIL{renderSortIndicator("email")}
+                  </th>
+                  <th className="px-6 py-3">ACTION</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {currentUsers.map((user) => (
+                  <tr key={user.id} className="border-b hover:bg-gray-100">
+                    <td className="px-6 py-4">{user.id}</td>
+                    <td className="px-6 py-4">{user.name}</td>
+                    <td className="px-6 py-4">{user.email}</td>
+                    <td className="px-6 py-4 space-y-2">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            setModalUser(user);
+                            setIsEditMode(true);
+                            openModal();
+                          }}
+                          className="focus:outline-none text-gray-50 bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-xs px-3 py-1"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-3 py-1"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Section */}
+          <div className="flex justify-center items-center mt-6 space-x-4">
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-4 py-2 rounded ${
+                  currentPage === i + 1
+                    ? "bg-gray-800 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
         </div>
 
-        {/* Pagination */}
-        <div className="flex justify-between items-center mt-4">
-          <button
-            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-            disabled={page === 1}
-            className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-900 disabled:opacity-100 transition duration-100"
-          >
-            Previous
-          </button>
-          <span className="text-gray-900">
-            Page {page} of {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={page === totalPages}
-            className="px-4 py-2 text-white bg-gray-700 rounded hover:bg-gray-900 disabled:opacity-100 transition duration-200"
-          >
-            Next
-          </button>
-        </div>
-
-        {/* Modal Tambah Data */}
+        {/* Modal Section untuk Tambah/Edit */}
         {isModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-            <div className="bg-white p-6 rounded shadow-md w-96">
-              <h2 className="text-lg font-bold mb-4 text-gray-700">
-                Tambah User
+          <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-80">
+              <h2 className="text-xl font-bold mb-4 text-gray-800">
+                {isEditMode ? "Edit User" : "Tambah User"}
               </h2>
-              <input
-                type="text"
-                placeholder="Nama"
-                value={newUser.name}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, name: e.target.value })
-                }
-                className="mb-2 p-2 border border-gray-300 rounded w-full focus:outline-none focus:border-gray-500"
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={newUser.email}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, email: e.target.value })
-                }
-                className="mb-4 p-2 border border-gray-300 rounded w-full focus:outline-none focus:border-gray-500"
-              />
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={actionModal}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition duration-300"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800 transition duration-300"
-                >
-                  Simpan
-                </button>
-              </div>
+              <form onSubmit={handleModalSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={modalUser.name}
+                    onChange={(e) =>
+                      setModalUser({ ...modalUser, name: e.target.value })
+                    }
+                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-gray-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={modalUser.email}
+                    onChange={(e) =>
+                      setModalUser({ ...modalUser, email: e.target.value })
+                    }
+                    className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-gray-500"
+                    required
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
+                  >
+                    {isEditMode ? "Simpan Perubahan" : "Simpan"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
 
-        {/* Notifikasi */}
+        {/* Toast Container untuk Notifikasi */}
         <ToastContainer
           position="top-right"
           autoClose={3000}
@@ -263,4 +377,6 @@ export default function Table() {
       </div>
     </div>
   );
-}
+};
+
+export default UserManagement;
