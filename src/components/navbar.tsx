@@ -94,7 +94,7 @@ export default function Navbar() {
                   >
                     <Link
                       href="/booking"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-500 hover:text-white transition duration-300 ease-in-out"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-500 hover:text-white transition duration-300 ease-in-out"
                     >
                       Booking
                     </Link>
@@ -136,13 +136,13 @@ export default function Navbar() {
                 >
                   <Link
                     href="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-500 hover:text-white transition duration-300 ease-in-out"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-500 hover:text-white transition duration-300 ease-in-out"
                   >
                     Profile
                   </Link>
                   <button
                     onClick={() => alert('Logging out...')}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-500 hover:text-white transition duration-300 ease-in-out"
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-500 hover:text-white transition duration-300 ease-in-out"
                   >
                     Log Out
                   </button>

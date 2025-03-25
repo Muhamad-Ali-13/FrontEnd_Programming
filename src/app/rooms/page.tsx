@@ -18,7 +18,6 @@ type Room = {
 };
 
 const RoomManagement = () => {
-  // State data dan modal
   const [rooms, setRooms] = useState<Room[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<string>("");
@@ -43,83 +42,110 @@ const RoomManagement = () => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  // Ambil data dari localStorage atau sampleData
+  // Perbaikan 1: Gunakan debounce untuk optimasi penyimpanan
+  const saveToLocalStorage = (roomsToSave: Room[]) => {
+    try {
+      localStorage.setItem("rooms", JSON.stringify(roomsToSave));
+    } catch (error) {
+      console.error("Gagal menyimpan ke localStorage:", error);
+      toast.error("Penyimpanan lokal penuh! Harap hapus beberapa data");
+    }
+  };
+
+  // Perbaikan 2: Gunakan debounce untuk mengurangi frekuensi penyimpanan
   useEffect(() => {
-    const savedRooms = localStorage.getItem("rooms");
-    if (savedRooms) {
-      try {
-        const parsedRooms = JSON.parse(savedRooms);
-        if (Array.isArray(parsedRooms)) {
-          setRooms(parsedRooms);
-        }
-      } catch (error) {
-        console.error("Error parsing data from localStorage:", error);
+    const timeoutId = setTimeout(() => {
+      saveToLocalStorage(rooms);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [rooms]);
+
+  // Perbaikan 3: Validasi data saat load
+  const loadFromLocalStorage = () => {
+    try {
+      const savedRooms = localStorage.getItem("rooms");
+      if (savedRooms) {
+        const parsed = JSON.parse(savedRooms);
+
+        // Validasi struktur data
+        const isValid = parsed.every((room: any) =>
+          room.id &&
+          room.name &&
+          typeof room.capacity === 'number' &&
+          typeof room.price === 'number'
+        );
+
+        if (isValid) return parsed;
       }
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    const savedData = loadFromLocalStorage();
+    if (savedData) {
+      setRooms(savedData);
     } else {
+      // Inisialisasi data sample hanya jika localStorage kosong
       const sampleData: Room[] = [
         {
-          "id": 1,
-          "name": "201",
-          "capacity": 40,
-          "category": "kelas",
-          "price": 1500000,
-          "status": "Available"
+          id: 1,
+          name: "201",
+          capacity: 40,
+          category: "kelas",
+          price: 1500000,
+          status: "Available",
         },
         {
-          "id": 2,
-          "name": "202",
-          "capacity": 25,
-          "category": "labolatorium",
-          "price": 2500000,
-          "status": "Available"
+          id: 2,
+          name: "202",
+          capacity: 25,
+          category: "labolatorium",
+          price: 2500000,
+          status: "Available",
         },
         {
-          "id": 3,
-          "name": "203",
-          "capacity": 100,
-          "category": "perpustakaan",
-          "price": 2000000,
-          "status": "Available"
+          id: 3,
+          name: "203",
+          capacity: 100,
+          category: "perpustakaan",
+          price: 2000000,
+          status: "Available",
         },
         {
-          "id": 4,
-          "name": "204",
-          "capacity": 300,
-          "category": "auditorium",
-          "price": 3500000,
-          "status": "Available"
+          id: 4,
+          name: "204",
+          capacity: 300,
+          category: "auditorium",
+          price: 3500000,
+          status: "Available",
         },
         {
-          "id": 5,
-          "name": "205",
-          "capacity": 50,
-          "category": "lainnya",
-          "price": 1800000,
-          "status": "Available"
-        },
-        {
-          "id": 6,
-          "name": "206",
-          "capacity": 10,
-          "category": "kelas",
-          "price": 2000000,
-          "status": "Available"
+          id: 5,
+          name: "205",
+          capacity: 50,
+          category: "lainnya",
+          price: 1800000,
+          status: "Available",
         },
       ];
       setRooms(sampleData);
-      localStorage.setItem("rooms", JSON.stringify(sampleData));
+      saveToLocalStorage(sampleData);
     }
   }, []);
 
-  // Simpan data ke localStorage setiap kali ada perubahan pada rooms
-  useEffect(() => {
-    localStorage.setItem("rooms", JSON.stringify(rooms));
-  }, [rooms]);
-
-  // Reset halaman ke 1 saat search berubah
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  // Perbaikan 4: Tambahkan fungsi untuk update status
+  const updateRoomStatus = (id: number, newStatus: "approved" | "rejected") => {
+    setRooms((prev) =>
+      prev.map((room) =>
+        room.id === id ? { ...room, status: newStatus } : room
+      )
+    );
+    toast.success(`Status berhasil diubah ke ${newStatus}`);
+  };
 
   // Fungsi search berdasarkan semua field
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,7 +204,6 @@ const RoomManagement = () => {
   // CRUD: Tambah atau Edit Room melalui modal
   const handleModalSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     // Validasi input
     if (!modalRoom.name || !modalRoom.capacity || !modalRoom.category || !modalRoom.price) {
       toast.error("Semua field harus diisi!", {
@@ -191,7 +216,6 @@ const RoomManagement = () => {
       });
       return;
     }
-
     if (isEditMode) {
       // Edit: Update data room
       setRooms((prevRooms) =>
@@ -267,7 +291,6 @@ const RoomManagement = () => {
               Add New Room
             </button>
           </div>
-
           {/* Table Section */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-gray-500 bg-gray-50 border border-gray-200 rounded-lg">
@@ -342,23 +365,13 @@ const RoomManagement = () => {
                     <td className="px-6 py-4 space-y-2">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() =>
-                            toast.success("Ruangan disetujui!", {
-                              position: "top-right",
-                              autoClose: 3000,
-                            })
-                          }
+                          onClick={() => updateRoomStatus(room.id, "approved")}
                           className="focus:outline-none text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-3 py-1"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() =>
-                            toast.error("Ruangan ditolak!", {
-                              position: "top-right",
-                              autoClose: 3000,
-                            })
-                          }
+                          onClick={() => updateRoomStatus(room.id, "rejected")}
                           className="focus:outline-none text-white bg-red-500 hover:bg-red-600 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-3 py-1"
                         >
                           Reject
@@ -388,7 +401,6 @@ const RoomManagement = () => {
               </tbody>
             </table>
           </div>
-
           {/* Pagination Section */}
           <div className="flex justify-center items-center mt-6 space-x-4">
             <button
@@ -420,7 +432,6 @@ const RoomManagement = () => {
             </button>
           </div>
         </div>
-
         {/* Modal Section untuk Tambah/Edit */}
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -518,7 +529,6 @@ const RoomManagement = () => {
             </div>
           </div>
         )}
-
         {/* Toast Container untuk Notifikasi */}
         <ToastContainer
           position="top-right"
@@ -535,5 +545,4 @@ const RoomManagement = () => {
     </div>
   );
 };
-
 export default RoomManagement;

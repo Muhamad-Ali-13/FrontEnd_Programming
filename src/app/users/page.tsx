@@ -32,40 +32,64 @@ const UserManagement = () => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
-  // Ambil data dari localStorage atau sampleData
+  // Simpan ke localStorage dengan debounce
+  const saveToLocalStorage = (usersToSave: User[]) => {
+    try {
+      localStorage.setItem("users", JSON.stringify(usersToSave));
+    } catch (error) {
+      console.error("Gagal menyimpan ke localStorage:", error);
+      toast.error("Penyimpanan lokal penuh! Harap hapus beberapa data.");
+    }
+  };
+
+  // Simpan data ke localStorage saat ada perubahan
   useEffect(() => {
-    const savedUsers = localStorage.getItem("users");
-    if (savedUsers) {
+    const timeoutId = setTimeout(() => {
+      saveToLocalStorage(users);
+    }, 500); // Delay 500ms untuk debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [users]);
+
+  // Muat data dari localStorage atau sampleData
+  useEffect(() => {
+    const loadFromLocalStorage = () => {
       try {
-        const parsedUsers = JSON.parse(savedUsers);
-        if (Array.isArray(parsedUsers)) {
-          setUsers(parsedUsers);
+        const savedUsers = localStorage.getItem("users");
+        if (savedUsers) {
+          const parsedUsers = JSON.parse(savedUsers);
+
+          // Validasi struktur data
+          const isValid = parsedUsers.every((user: any) =>
+            user.id &&
+            user.name &&
+            user.email &&
+            typeof user.id === "number" &&
+            typeof user.name === "string" &&
+            typeof user.email === "string"
+          );
+
+          if (isValid) return parsedUsers;
         }
       } catch (error) {
-        console.error("Error parsing data from localStorage:", error);
+        console.error("Error loading data:", error);
       }
+      return null;
+    };
+
+    const savedData = loadFromLocalStorage();
+    if (savedData) {
+      setUsers(savedData);
     } else {
+      // Inisialisasi data sample jika localStorage kosong
       const sampleData: User[] = [
-        {
-          id: 1,
-          name: "Ali",
-          email: "ali@gmail.com",
-        },
-        {
-          id: 2,
-          name: "Jane Smith",
-          email: "jane.smith@example.com",
-        },
+        { id: 1, name: "Ali", email: "ali@gmail.com" },
+        { id: 2, name: "Jane Smith", email: "jane.smith@example.com" },
       ];
       setUsers(sampleData);
-      localStorage.setItem("users", JSON.stringify(sampleData));
+      saveToLocalStorage(sampleData);
     }
   }, []);
-
-  // Simpan data ke localStorage setiap kali ada perubahan pada users
-  useEffect(() => {
-    localStorage.setItem("users", JSON.stringify(users));
-  }, [users]);
 
   // Reset halaman ke 1 saat search berubah
   useEffect(() => {
@@ -126,20 +150,14 @@ const UserManagement = () => {
   // CRUD: Tambah atau Edit User melalui modal
   const handleModalSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     // Validasi input
     if (!modalUser.name || !modalUser.email) {
       toast.error("Semua field harus diisi!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
       });
       return;
     }
-
     if (isEditMode) {
       // Edit: Update data user
       setUsers((prevUsers) =>
@@ -148,23 +166,14 @@ const UserManagement = () => {
       toast.success("Data berhasil diperbarui!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
       });
     } else {
       // Tambah: Generate id baru, dan tambahkan user baru
-      const newId =
-        users.length > 0 ? Math.max(...users.map((u) => u.id)) + 1 : 1;
+      const newId = users.length > 0 ? Math.max(...users.map((u) => u.id)) + 1 : 1;
       setUsers((prevUsers) => [...prevUsers, { ...modalUser, id: newId }]);
       toast.success("Data berhasil disimpan!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
       });
     }
     closeModal();
@@ -178,10 +187,6 @@ const UserManagement = () => {
       toast.success("Pengguna berhasil dihapus!", {
         position: "top-right",
         autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
       });
     }
   };
@@ -215,7 +220,6 @@ const UserManagement = () => {
               Add New User
             </button>
           </div>
-
           {/* Table Section */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-gray-500 bg-gray-50 border border-gray-200 rounded-lg">
@@ -273,7 +277,6 @@ const UserManagement = () => {
               </tbody>
             </table>
           </div>
-
           {/* Pagination Section */}
           <div className="flex justify-center items-center mt-6 space-x-4">
             <button
@@ -305,7 +308,6 @@ const UserManagement = () => {
             </button>
           </div>
         </div>
-
         {/* Modal Section untuk Tambah/Edit */}
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
@@ -361,7 +363,6 @@ const UserManagement = () => {
             </div>
           </div>
         )}
-
         {/* Toast Container untuk Notifikasi */}
         <ToastContainer
           position="top-right"
@@ -378,5 +379,4 @@ const UserManagement = () => {
     </div>
   );
 };
-
 export default UserManagement;
