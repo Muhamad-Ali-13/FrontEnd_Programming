@@ -1,8 +1,8 @@
 // components/Navbar.js
-'use client';
-import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+"use client";
+import Link from "next/link";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -13,34 +13,40 @@ export default function Navbar() {
   // Effect untuk menutup dropdown Transaction saat klik di luar
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (transactionRef.current && !transactionRef.current.contains(event.target as Node)) {
+      if (
+        transactionRef.current &&
+        !transactionRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     };
 
     if (isDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isDropdownOpen]);
 
   // Effect untuk menutup dropdown Profile saat klik di luar
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node)
+      ) {
         setIsProfileOpen(false);
       }
     };
 
     if (isProfileOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isProfileOpen]);
 
@@ -75,33 +81,12 @@ export default function Navbar() {
             >
               User
             </Link>
-            {/* Transaction Dropdown */}
-            <div className="relative" ref={transactionRef}>
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium focus:outline-none transition duration-300 ease-in-out"
-              >
-                Transaction
-              </button>
-              <AnimatePresence>
-                {isDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg"
-                  >
-                    <Link
-                      href="/booking"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-500 hover:text-white transition duration-300 ease-in-out"
-                    >
-                      Booking
-                    </Link>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            <Link
+              href="/booking"
+              className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition duration-300 ease-in-out"
+            >
+              Booking
+            </Link>
           </div>
 
           {/* Right Section (Profile Icon with Dropdown) */}
@@ -141,7 +126,7 @@ export default function Navbar() {
                     Profile
                   </Link>
                   <button
-                    onClick={() => alert('Logging out...')}
+                    onClick={() => alert("Logging out...")}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-500 hover:text-white transition duration-300 ease-in-out"
                   >
                     Log Out
