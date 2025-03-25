@@ -1,402 +1,398 @@
-'use client';
-import { useState } from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Bar, Pie } from 'react-chartjs-2';
-import Link from 'next/link';
+"use client";
+import { useState, useEffect } from "react";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
+// Tipe data untuk Booking, Room, dan User
+type Booking = {
+  id: number;
+  roomId: number;      // ID ruangan yang dipesan
+  bookingDate: string; // Format YYYY-MM-DD
+  bookedBy: number;    // ID user yang memesan
+  price: number;       // Diambil dari room.price
+};
 
-export default function Dashboard() {
-  // Data for Monthly Revenue Bar Chart
-  const barChartData = {
-    labels: ['January', 'February', 'March', 'April', 'May', 'June'],
-    datasets: [
-      {
-        label: 'Revenue',
-        data: [5000, 7000, 6500, 8000, 9000, 10000],
-        backgroundColor: '#4F46E5',
-        borderRadius: 4,
-      },
-    ],
+type RoomData = {
+  id: number;
+  name: string;
+  price: number;
+};
+
+type UserData = {
+  id: number;
+  name: string;
+  email: string;
+};
+
+const BookingManagement = () => {
+  // State utama
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [rooms, setRooms] = useState<RoomData[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // State modal untuk tambah/edit
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const initialModalBooking: Booking = {
+    id: 0,
+    roomId: 0,
+    bookingDate: new Date().toISOString().slice(0, 10), // default tanggal sekarang
+    bookedBy: 0,
+    price: 0,
+  };
+  const [modalBooking, setModalBooking] = useState<Booking>(initialModalBooking);
+
+  // Modal helper functions
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+  const actionModal = () => {
+    setIsModalOpen(!isModalOpen);
   };
 
-  const barChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: true,
-        text: 'Monthly Revenue',
-        font: {
-          size: 14,
-        },
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
-        },
-      },
-      y: {
-        grid: {
-          color: '#e5e7eb',
-        },
-      },
-    },
+  // Fetch data dari bookings.json, rooms.json, dan users.json
+  useEffect(() => {
+    fetch("/bookings.json")
+      .then((res) => res.json())
+      .then((data) => setBookings(data))
+      .catch((err) => console.error("Error fetching bookings:", err));
+  }, []);
+
+  useEffect(() => {
+    fetch("/rooms.json")
+      .then((res) => res.json())
+      .then((data) => setRooms(data))
+      .catch((err) => console.error("Error fetching rooms:", err));
+  }, []);
+
+  useEffect(() => {
+    fetch("/users.json")
+      .then((res) => res.json())
+      .then((data) => setUsers(data))
+      .catch((err) => console.error("Error fetching users:", err));
+  }, []);
+
+  // Reset halaman ke 1 saat search query berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Helper functions untuk mendapatkan nama Room dan User
+  const getRoomName = (roomId: number): string => {
+    const room = rooms.find((r) => r.id === roomId);
+    return room ? room.name : "Unknown Room";
   };
 
-  // Data for Room Occupancy Pie Chart
-  const pieChartData = {
-    labels: ['Occupied', 'Available'],
-    datasets: [
-      {
-        label: 'Room Occupancy',
-        data: [30, 20],
-        backgroundColor: ['#10B981', '#EF4444'],
-        hoverOffset: 4,
-      },
-    ],
+  const getUserName = (userId: number): string => {
+    const user = users.find((u) => u.id === userId);
+    return user ? user.name : "Unknown User";
   };
 
-  const pieChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-      },
-      title: {
-        display: true,
-        text: 'Room Occupancy',
-        font: {
-          size: 14,
-        },
-      },
-    },
+  // Filtering: cari berdasarkan ID, room name, booking date, user name, atau price
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
-  // Data for Recommended Rooms
-  const recommendedRooms = [
-    {
-      id: 1,
-      name: 'Deluxe Room',
-      image: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$150/night',
-      class: 'Luxury',
-    },
-    {
-      id: 2,
-      name: 'Standard Room',
-      image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$100/night',
-      class: 'Standard',
-    },
-    {
-      id: 3,
-      name: 'Suite Room',
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$250/night',
-      class: 'Premium',
-    },
-  ];
+  const filteredBookings = bookings.filter((booking) => {
+    const searchLower = searchQuery.toLowerCase();
+    const roomName = getRoomName(booking.roomId).toLowerCase();
+    const bookedByName = getUserName(booking.bookedBy).toLowerCase();
+    return (
+      booking.id.toString().includes(searchLower) ||
+      roomName.includes(searchLower) ||
+      booking.bookingDate.toLowerCase().includes(searchLower) ||
+      bookedByName.includes(searchLower) ||
+      booking.price.toString().includes(searchLower)
+    );
+  });
 
-  // Data for Customer Testimonials
-  const testimonials = [
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      review: 'The Deluxe Room was amazing! The view was breathtaking, and the service was top-notch.',
-      image: 'https://randomuser.me/api/portraits/women/1.jpg',
-    },
-    {
-      id: 2,
-      name: 'Michael Brown',
-      review: 'I had a great stay at the Standard Room. Very comfortable and clean.',
-      image: 'https://randomuser.me/api/portraits/men/1.jpg',
-    },
-    {
-      id: 3,
-      name: 'Emily Davis',
-      review: 'The Suite Room exceeded my expectations. Highly recommend it!',
-      image: 'https://randomuser.me/api/portraits/women/2.jpg',
-    },
-  ];
+  // Sorting: untuk field "room" dan "bookedBy" sorting berdasarkan nama
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    if (!sortField) return 0;
+    if (sortField === "room") {
+      const aName = getRoomName(a.roomId);
+      const bName = getRoomName(b.roomId);
+      return sortOrder === "asc" ? aName.localeCompare(bName) : bName.localeCompare(aName);
+    }
+    if (sortField === "bookedBy") {
+      const aName = getUserName(a.bookedBy);
+      const bName = getUserName(b.bookedBy);
+      return sortOrder === "asc" ? aName.localeCompare(bName) : bName.localeCompare(aName);
+    }
+    // Untuk field lainnya (misal id, bookingDate, price)
+    const aValue = a[sortField as keyof Booking];
+    const bValue = b[sortField as keyof Booking];
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+    } else {
+      return sortOrder === "asc"
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
+    }
+  });
+
+  // Pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBookings = sortedBookings.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedBookings.length / itemsPerPage);
+
+  const renderSortIndicator = (field: string) => {
+    if (sortField === field) {
+      return sortOrder === "asc" ? " ↑" : " ↓";
+    }
+    return "";
+  };
+
+  // CRUD: Tambah atau Edit Booking melalui modal
+  const handleModalSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Ambil harga dari room yang dipilih
+    const selectedRoom = rooms.find((r) => r.id === modalBooking.roomId);
+    const derivedPrice = selectedRoom ? selectedRoom.price : 0;
+    const bookingData: Booking = { ...modalBooking, price: derivedPrice };
+
+    if (isEditMode) {
+      // Update booking
+      setBookings((prev) =>
+        prev.map((booking) => (booking.id === bookingData.id ? bookingData : booking))
+      );
+    } else {
+      // Tambah booking baru dengan ID baru
+      const newId = bookings.length > 0 ? Math.max(...bookings.map((b) => b.id)) + 1 : 1;
+      setBookings((prev) => [...prev, { ...bookingData, id: newId }]);
+    }
+    closeModal();
+    setModalBooking(initialModalBooking);
+  };
+
+  const handleDeleteBooking = (id: number) => {
+    if (confirm("Apakah Anda yakin ingin menghapus booking ini?")) {
+      setBookings((prev) => prev.filter((b) => b.id !== id));
+    }
+  };
 
   return (
-    <div>
-      {/* Main Content */}
-      <div className="p-6">
+    <div className="min-h-screen bg-gray-100 flex justify-center p-9">
+      <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-7xl h-full">
         {/* Header */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
-
-        {/* Cards Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Total Rooms */}
-          <div className="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
-            <div className="bg-indigo-100 p-3 rounded-full">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-indigo-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0l-2-2m2 2V4a1 1 0 00-1-1h-3a1 1 0 00-1 1v10"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Total Rooms</h2>
-              <p className="text-2xl font-bold text-indigo-600 mt-1">300</p>
-            </div>
-          </div>
-
-          {/* Occupied Rooms */}
-          <div className="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
-            <div className="bg-green-100 p-3 rounded-full">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-green-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Occupied Rooms</h2>
-              <p className="text-2xl font-bold text-green-600 mt-1">150</p>
-            </div>
-          </div>
-
-          {/* Available Rooms */}
-          <div className="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
-            <div className="bg-red-100 p-3 rounded-full">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-red-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Available Rooms</h2>
-              <p className="text-2xl font-bold text-red-600 mt-1">150</p>
-            </div>
-          </div>
-
-          {/* Total Revenue */}
-          <div className="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
-            <div className="bg-blue-100 p-3 rounded-full">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6 text-blue-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Total Revenue</h2>
-              <p className="text-2xl font-bold text-blue-600 mt-1">$100,000</p>
-            </div>
-          </div>
+        <div className="flex justify-between items-center mb-6">
+          <input
+            type="text"
+            placeholder="Search bookings..."
+            value={searchQuery}
+            onChange={handleSearch}
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={() => {
+              // Set default tanggal ke hari ini
+              setModalBooking({ ...initialModalBooking, bookingDate: new Date().toISOString().slice(0, 10) });
+              setIsEditMode(false);
+              openModal();
+            }}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+          >
+            Add New
+          </button>
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Monthly Revenue Bar Chart */}
-          <div className="bg-white p-6 rounded-lg shadow-md h-64">
-            <Bar data={barChartData} options={barChartOptions} />
-          </div>
-
-          {/* Room Occupancy Pie Chart */}
-          <div className="bg-white p-6 rounded-lg shadow-md h-64">
-            <Pie data={pieChartData} options={pieChartOptions} />
-          </div>
+        {/* Tabel */}
+        <div className="overflow-x-auto shadow-lg">
+          <table className="w-full text-sm text-left text-gray-500">
+            <thead className="text-sm text-gray-700 uppercase bg-white">
+              <tr className="bg-white border-t border-b hover:bg-gray-50">
+                <th onClick={() => handleSort("id")} className="px-6 py-3 text-center cursor-pointer select-none">
+                  ID {renderSortIndicator("id")}
+                </th>
+                <th onClick={() => handleSort("room")} className="px-6 py-3 text-center cursor-pointer select-none">
+                  Room {renderSortIndicator("room")}
+                </th>
+                <th onClick={() => handleSort("bookingDate")} className="px-6 py-3 text-center cursor-pointer select-none">
+                  Booking Date {renderSortIndicator("bookingDate")}
+                </th>
+                <th onClick={() => handleSort("bookedBy")} className="px-6 py-3 text-center cursor-pointer select-none">
+                  Booked By {renderSortIndicator("bookedBy")}
+                </th>
+                <th onClick={() => handleSort("price")} className="px-6 py-3 text-center cursor-pointer select-none">
+                  Price {renderSortIndicator("price")}
+                </th>
+                <th className="px-6 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentBookings.map((booking) => (
+                <tr key={booking.id} className="bg-white border-b hover:bg-gray-50">
+                  <td className="px-4 py-2 text-center">{booking.id}</td>
+                  <td className="px-4 py-2 text-center">{getRoomName(booking.roomId)}</td>
+                  <td className="px-4 py-2 text-center">
+                    {new Date(booking.bookingDate).toLocaleDateString("id-ID")}
+                  </td>
+                  <td className="px-4 py-2 text-center">{getUserName(booking.bookedBy)}</td>
+                  <td className="px-4 py-2 text-center">
+                    {new Intl.NumberFormat("id-ID", {
+                      style: "currency",
+                      currency: "IDR",
+                    }).format(booking.price)}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <div className="flex flex-col space-y-1">
+                      <button
+                        onClick={() => {
+                          setModalBooking(booking);
+                          setIsEditMode(true);
+                          openModal();
+                        }}
+                        className="bg-yellow-400 text-white px-4 py-2 rounded hover:bg-yellow-500"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBooking(booking.id)}
+                        className="bg-red-700 text-white px-4 py-2 rounded hover:bg-red-800"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        {/* Hotel Profile Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">About FinWise Hotel</h2>
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Left Side: Image */}
-            <div className="md:w-1/2">
-              <img
-                src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60"
-                alt="FinWise Hotel"
-                className="w-full h-64 object-cover rounded-md"
-              />
-            </div>
-            {/* Right Side: Text */}
-            <div className="md:w-1/2">
-              <p className="text-gray-600 text-sm mb-4">
-                FinWise Hotel is a luxury hotel located in the heart of the city. Established in 2010, we have been
-                providing exceptional service and unforgettable experiences for our guests. Our hotel features 50
-                beautifully designed rooms, ranging from standard to premium suites, each equipped with modern amenities
-                to ensure your comfort.
-              </p>
-              <p className="text-gray-600 text-sm mb-4">
-                Our commitment to quality is reflected in every aspect of our service. From our 24/7 concierge to our
-                world-class dining options, we strive to exceed your expectations. Whether you're visiting for business or
-                leisure, FinWise Hotel is your perfect destination.
-              </p>
-              <p className="text-gray-600 text-sm">
-                Join us and experience the ultimate in hospitality. We look forward to welcoming you to FinWise Hotel!
-              </p>
-            </div>
-          </div>
+        {/* Pagination */}
+        <div className="flex justify-center items-center mt-4 space-x-2">
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-4 py-2 rounded ${
+                currentPage === i + 1 ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
-
-        {/* Recommended Rooms Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Recommended Rooms</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recommendedRooms.map((room) => (
-              <div key={room.id} className="bg-gray-50 p-4 rounded-lg shadow-md">
-                <img src={room.image} alt={room.name} className="w-full h-40 object-cover rounded-md mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800">{room.name}</h3>
-                <p className="text-gray-600 text-sm">{room.class}</p>
-                <p className="text-indigo-600 font-bold mt-2">{room.price}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Customer Testimonials Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Customer Testimonials</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {testimonials.map((testimonial) => (
-              <div key={testimonial.id} className="bg-gray-50 p-4 rounded-lg shadow-md">
-                <div className="flex items-center space-x-4 mb-4">
-                  <img
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{testimonial.name}</h3>
-                  </div>
-                </div>
-                <p className="text-gray-600 text-sm">{testimonial.review}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer Section */}
-        <footer className="bg-gray-800 text-white p-6 rounded-lg shadow-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <h3 className="text-lg font-bold mb-2">About Us</h3>
-                <p className="text-sm text-gray-400">
-                  FinWise Hotel is a luxury hotel located in the heart of the city. We provide exceptional service and
-                  unforgettable experiences for our guests.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold mb-2">Contact Us</h3>
-                <p className="text-sm text-gray-400">Email: info@finwisehotel.com</p>
-                <p className="text-sm text-gray-400">Phone: +1 (123) 456-7890</p>
-                <p className="text-sm text-gray-400">Address: 123 Luxury Lane, Cityville</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold mb-2">Follow Us</h3>
-                <div className="flex space-x-4">
-                  <Link href="#" className="text-gray-400 hover:text-white transition duration-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"
-                      />
-                    </svg>
-                  </Link>
-                  <Link href="#" className="text-gray-400 hover:text-white transition duration-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"
-                      />
-                    </svg>
-                  </Link>
-                  <Link href="#" className="text-gray-400 hover:text-white transition duration-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
+
+      {/* Modal untuk Tambah/Edit Booking */}
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+            <h2 className="text-2xl font-bold mb-4">
+              {isEditMode ? "Edit Booking" : "Add New Booking"}
+            </h2>
+            <form onSubmit={handleModalSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium">Room</label>
+                <select
+                  value={modalBooking.roomId}
+                  onChange={(e) =>
+                    setModalBooking({
+                      ...modalBooking,
+                      roomId: Number(e.target.value),
+                    })
+                  }
+                  className="w-full border p-2 rounded"
+                  required
+                >
+                  <option value={0} disabled>
+                    -- Pilih Room --
+                  </option>
+                  {rooms.map((room) => (
+                    <option key={room.id} value={room.id}>
+                      {room.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Booking Date</label>
+                <input
+                  type="date"
+                  value={modalBooking.bookingDate}
+                  onChange={(e) =>
+                    setModalBooking({
+                      ...modalBooking,
+                      bookingDate: e.target.value,
+                    })
+                  }
+                  className="w-full border p-2 rounded"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Booked By</label>
+                <select
+                  value={modalBooking.bookedBy}
+                  onChange={(e) =>
+                    setModalBooking({
+                      ...modalBooking,
+                      bookedBy: Number(e.target.value),
+                    })
+                  }
+                  className="w-full border p-2 rounded"
+                  required
+                >
+                  <option value={0} disabled>
+                    -- Pilih User --
+                  </option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+                  {isEditMode ? "Save Changes" : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default BookingManagement;

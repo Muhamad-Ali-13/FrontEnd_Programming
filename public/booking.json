@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "roomId": 4,
+    "bookingDate": "2025-06-13",
+    "bookedBy": 1,
+    "price": 3500000
+  },
+  {
+    "id": 2,
+    "roomId": 1,
+    "bookingDate": "2025-07-01",
+    "bookedBy": 2,
+    "price": 1500000
+  },
+  {
+    "id": 3,
+    "roomId": 2,
+    "bookingDate": "2025-07-10",
+    "bookedBy": 3,
+    "price": 2500000
+  }
+]

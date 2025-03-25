@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "name": "201",
+    "capacity": 40,
+    "category": "kelas",
+    "price": 1500000,
+    "status": "available"
+  },
+  {
+    "id": 2,
+    "name": "202",
+    "capacity": 25,
+    "category": "labolatorium",
+    "price": 2500000,
+    "status": "available"
+  },
+  {
+    "id": 3,
+    "name": "203",
+    "capacity": 100,
+    "category": "perpustakaan",
+    "price": 2000000,
+    "status": "available"
+  },
+  {
+    "id": 4,
+    "name": "204",
+    "capacity": 300,
+    "category": "auditorium",
+    "price": 3500000,
+    "status": "available"
+  },
+  {
+    "id": 5,
+    "name": "205",
+    "capacity": 50,
+    "category": "lainnya",
+    "price": 1800000,
+    "status": "available"
+  },
+  {
+    "id": 6,
+    "name": "206",
+    "capacity": 10,
+    "category": "kelas",
+    "price": 2000000,
+    "status": "available"
+  }
+]

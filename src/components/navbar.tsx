@@ -58,7 +58,7 @@ export default function Navbar() {
           {/* Center Section (Menu Items) */}
           <div className="hidden md:flex space-x-4">
             <Link
-              href="/"
+              href="/dashboard"
               className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition duration-300 ease-in-out"
             >
               Dashboard
@@ -93,7 +93,7 @@ export default function Navbar() {
                     className="absolute z-10 mt-2 w-48 bg-white rounded-md shadow-lg"
                   >
                     <Link
-                      href="/transaksi"
+                      href="/booking"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-500 hover:text-white transition duration-300 ease-in-out"
                     >
                       Booking

@@ -1,0 +1,67 @@
+1.  Kebutuhan Instalasi
+    Software yang Dibutuhkan:
+    Node.js (Versi terbaru yang direkomendasikan oleh Next.js)
+    NPM atau Yarn (Untuk mengelola dependensi proyek)
+    Git (Untuk mengunduh repository dari GitHub)
+    Database (PostgreSQL atau MongoDB) jika menggunakan database
+    Editor Kode seperti VS Code untuk pengembangan
+
+    Hardware yang Dibutuhkan:
+    Processor: Minimal Intel Core i3 atau setara
+    RAM: Minimal 4GB (Disarankan 8GB untuk performa optimal)
+    Storage: Minimal 10GB ruang kosong untuk proyek dan dependensi
+    npm install react-toastify
+
+2.  Tahapan Instalasi dari GitHub
+
+    Clone Repository
+    git clone https://github.com/username/repository-name.git
+    cd repository-name
+
+    Install Dependencies
+    npm install
+
+    Buat File Konfigurasi .env (Jika Diperlukan)
+    NEXT_PUBLIC_API_URL=http://localhost:3000/api
+    DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+
+    Jalankan Proyek dalam Mode Development
+    npm run dev
+    Akses Aplikasi
+    Buka browser dan akses http://localhost:3000
+
+3.  /src
+ ├── app/               # Folder utama untuk routing dan halaman
+ │   ├── booking/       # Halaman booking
+ │   ├── dashboard/     # Halaman utama
+ │   ├── rooms/         # Halaman rooms
+ │   ├── users/         # Halaman users
+ │   ├── favicon.ico    # Ikon aplikasi
+ │   ├── globals.css    # Styling global
+ │   ├── layout.tsx     # Layout utama aplikasi
+ ├── components/        # Komponen UI yang dapat digunakan kembali
+ │   ├── modal.tsx      # Komponen modal untuk tambah/edit data
+ │   ├── navbar.tsx     # Navigasi utama aplikasi
+ │   ├── pagination.tsx # Komponen pagination
+ │   ├── searchbar.tsx  # Komponen search bar untuk pencarian
+ ├── styles/            # Folder untuk styling
+ │   ├── global.css     # Styling global aplikasi
+
+
+ 4. Modul/Fitur yang Tersedia
+    Menu Beranda: Menampilkan grafik data
+    Menu Room: Tambah data room, edit status dan delete room serta dilengkapi dengan pagination, sorting, search
+    Menu User: Tambah data user, serta dilengkapi dengan pagination, sorting, search
+    Menu Booking: Tambah data booking, delete data booking, serta dilengkapi dengan pagination, sorting, search
+    Fitur Tambah Data: Modal untuk menambahkan data baru
+    Fitur Pencarian: Search bar untuk mencari data
+    Fitur Sorting: Mengurutkan data berdasarkan kolom tertentu
+    Fitur Pagination: Menampilkan data dengan paginasi
+    Validasi Form: Validasi input dan delete pada formulir
+
+5.  "date-fns": "^4.1.0",
+    "framer-motion": "^12.4.4",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^19.0.0",
+    "react-toastify": "^11.0.5"
+    
