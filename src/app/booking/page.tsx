@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 
+// Tipe data untuk Booking, Room, dan User
 type Booking = {
   id: number;
-  roomId: number;
-  bookingDate: string;
-  bookedBy: number;
-  price: number;
+  roomId: number; // ID ruangan yang dipesan
+  bookingDate: string; // Format YYYY-MM-DD
+  bookedBy: number; // ID user yang memesan
+  price: number; // Diambil dari room.price
 };
 
 type RoomData = {
@@ -22,6 +23,7 @@ type UserData = {
 };
 
 const BookingManagement = () => {
+  // State utama
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
@@ -30,35 +32,29 @@ const BookingManagement = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+
+  // State modal untuk tambah/edit
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [formErrors, setFormErrors] = useState({
-    roomId: "",
-    bookingDate: "",
-    bookedBy: "",
-  });
-  const [notification, setNotification] = useState({
-    message: "",
-    type: "success",
-    show: false,
-  });
-
   const initialModalBooking: Booking = {
     id: 0,
     roomId: 0,
-    bookingDate: new Date().toISOString().slice(0, 10),
+    bookingDate: new Date().toISOString().slice(0, 10), // default tanggal sekarang
     bookedBy: 0,
     price: 0,
   };
+  const [modalBooking, setModalBooking] =
+    useState<Booking>(initialModalBooking);
 
-  const [modalBooking, setModalBooking] = useState<Booking>(initialModalBooking);
-
-  const openModal = () => setIsModalOpen(true);
+  // Modal helper functions
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
   const closeModal = () => {
     setIsModalOpen(false);
-    setFormErrors({ roomId: "", bookingDate: "", bookedBy: "" });
   };
 
+  // Simpan ke localStorage dengan debounce
   const saveToLocalStorage = (bookingsToSave: Booking[]) => {
     try {
       localStorage.setItem("bookings", JSON.stringify(bookingsToSave));
@@ -67,27 +63,38 @@ const BookingManagement = () => {
     }
   };
 
+  // Simpan data ke localStorage saat ada perubahan
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       saveToLocalStorage(bookings);
-    }, 500);
+    }, 500); // Delay 500ms untuk debounce
+
     return () => clearTimeout(timeoutId);
   }, [bookings]);
 
+  // Muat data dari localStorage atau sampleData
   useEffect(() => {
     const loadFromLocalStorage = () => {
       try {
         const savedBookings = localStorage.getItem("bookings");
         if (savedBookings) {
           const parsedBookings = JSON.parse(savedBookings);
+
+          // Validasi struktur data
           const isValid = parsedBookings.every(
             (booking: any) =>
               booking.id &&
               booking.roomId &&
               booking.bookingDate &&
               booking.bookedBy &&
-              booking.price
+              booking.price &&
+              typeof booking.id === "number" &&
+              typeof booking.roomId === "number" &&
+              typeof booking.bookingDate === "string" &&
+              typeof booking.bookedBy === "number" &&
+              typeof booking.price === "number"
           );
+
           if (isValid) return parsedBookings;
         }
       } catch (error) {
@@ -100,6 +107,7 @@ const BookingManagement = () => {
     if (savedData) {
       setBookings(savedData);
     } else {
+      // Inisialisasi data sample jika localStorage kosong
       const sampleData: Booking[] = [
         {
           id: 1,
@@ -121,6 +129,7 @@ const BookingManagement = () => {
     }
   }, []);
 
+  // Fetch data dari rooms.json dan users.json
   useEffect(() => {
     fetch("/rooms.json")
       .then((res) => res.json())
@@ -135,10 +144,12 @@ const BookingManagement = () => {
       .catch((err) => console.error("Error fetching users:", err));
   }, []);
 
+  // Reset halaman ke 1 saat search query berubah
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
 
+  // Helper functions untuk mendapatkan nama Room dan User
   const getRoomName = (roomId: number): string => {
     const room = rooms.find((r) => r.id === roomId);
     return room ? room.name : "Unknown Room";
@@ -149,6 +160,7 @@ const BookingManagement = () => {
     return user ? user.name : "Unknown User";
   };
 
+  // Filtering: cari berdasarkan ID, room name, booking date, user name, atau price
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -166,6 +178,7 @@ const BookingManagement = () => {
     );
   });
 
+  // Sorting: untuk field "room" dan "bookedBy" sorting berdasarkan nama
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -191,16 +204,19 @@ const BookingManagement = () => {
         ? aName.localeCompare(bName)
         : bName.localeCompare(aName);
     }
+    // Untuk field lainnya (misal id, bookingDate, price)
     const aValue = a[sortField as keyof Booking];
     const bValue = b[sortField as keyof Booking];
     if (typeof aValue === "number" && typeof bValue === "number") {
       return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+    } else {
+      return sortOrder === "asc"
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
     }
-    return sortOrder === "asc"
-      ? String(aValue).localeCompare(String(bValue))
-      : String(bValue).localeCompare(String(aValue));
   });
 
+  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentBookings = sortedBookings.slice(
@@ -216,153 +232,44 @@ const BookingManagement = () => {
     return "";
   };
 
+  // CRUD: Tambah atau Edit Booking melalui modal
   const handleModalSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setFormErrors({ roomId: "", bookingDate: "", bookedBy: "" });
-    setNotification({ message: "", type: "success", show: false });
-
-    // Validasi Room
+    // Ambil harga dari room yang dipilih
     const selectedRoom = rooms.find((r) => r.id === modalBooking.roomId);
-    if (!selectedRoom) {
-      setFormErrors((prev) => ({ ...prev, roomId: "Room harus dipilih" }));
-      setNotification({
-        message: "Room harus dipilih!",
-        type: "error",
-        show: true,
-      });
-      return;
-    }
-
-    // Validasi User
-    const selectedUser = users.find((u) => u.id === modalBooking.bookedBy);
-    if (!selectedUser) {
-      setFormErrors((prev) => ({ ...prev, bookedBy: "User harus dipilih" }));
-      setNotification({
-        message: "User harus dipilih!",
-        type: "error",
-        show: true,
-      });
-      return;
-    }
-
-    // Validasi Tanggal
-    const today = new Date().toISOString().split("T")[0];
-    if (modalBooking.bookingDate < today) {
-      setFormErrors((prev) => ({
-        ...prev,
-        bookingDate: "Tanggal tidak valid",
-      }));
-      setNotification({
-        message: "Tanggal tidak valid!",
-        type: "error",
-        show: true,
-      });
-      return;
-    }
-
-    // Validasi duplikasi
-    const isDuplicate = bookings.some(
-      (booking) =>
-        booking.roomId === modalBooking.roomId &&
-        booking.bookingDate === modalBooking.bookingDate &&
-        booking.id !== modalBooking.id
-    );
-
-    if (isDuplicate) {
-      setNotification({
-        message: "Ruangan sudah dibooking pada tanggal tersebut!",
-        type: "error",
-        show: true,
-      });
-      return;
-    }
-
-    // Proses simpan/update
-    const bookingData: Booking = {
-      ...modalBooking,
-      price: selectedRoom.price,
-    };
-
+    const derivedPrice = selectedRoom ? selectedRoom.price : 0;
+    const bookingData: Booking = { ...modalBooking, price: derivedPrice };
     if (isEditMode) {
+      // Update booking
       setBookings((prev) =>
-        prev.map((b) => (b.id === bookingData.id ? bookingData : b))
+        prev.map((booking) =>
+          booking.id === bookingData.id ? bookingData : booking
+        )
       );
-      setNotification({
-        message: "Data berhasil diupdate!",
-        type: "success",
-        show: true,
-      });
     } else {
+      // Tambah booking baru dengan ID baru
       const newId =
-        bookings.length > 0
-          ? Math.max(...bookings.map((b) => b.id)) + 1
-          : 1;
+        bookings.length > 0 ? Math.max(...bookings.map((b) => b.id)) + 1 : 1;
       setBookings((prev) => [...prev, { ...bookingData, id: newId }]);
-      setNotification({
-        message: "Data berhasil disimpan!",
-        type: "success",
-        show: true,
-      });
     }
-
     closeModal();
     setModalBooking(initialModalBooking);
   };
 
   const handleDeleteBooking = (id: number) => {
-    setNotification({
-      message: "Apakah Anda yakin ingin menghapus data ini?",
-      type: "warning",
-      show: true,
-    });
-
-    // Simpan timeout untuk auto-hide
-    const timer = setTimeout(() => {
-      setNotification({ message: "", type: "success", show: false });
-    }, 5000);
-
-    // Hapus data setelah konfirmasi
-    const confirmDelete = () => {
+    if (confirm("Apakah Anda yakin ingin menghapus booking ini?")) {
       setBookings((prev) => prev.filter((b) => b.id !== id));
-      setNotification({
-        message: "Data berhasil dihapus!",
-        type: "success",
-        show: true,
-      });
-      clearTimeout(timer);
-    };
-
-    return () => clearTimeout(timer);
+    }
   };
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen relative">
-      {/* Notifikasi */}
-      {notification.show && (
-        <div
-          className={`fixed top-4 right-4 p-4 rounded shadow-lg transition-opacity duration-300 ${
-            notification.type === "success"
-              ? "bg-green-100 text-green-800"
-              : notification.type === "error"
-              ? "bg-red-100 text-red-800"
-              : "bg-yellow-100 text-yellow-800"
-          }`}
-        >
-          {notification.message}
-          <button
-            className="ml-4 text-gray-500 hover:text-gray-700"
-            onClick={() => setNotification({ ...notification, show: false })}
-          >
-            ×
-          </button>
-        </div>
-      )}
-
+    <div className="p-8 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">
         Daftar Booking
       </h1>
       <div className="min-h-screen bg-gray-100 flex justify-center p-9">
         <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-7xl h-full">
+          {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <input
               type="text"
@@ -373,6 +280,7 @@ const BookingManagement = () => {
             />
             <button
               onClick={() => {
+                // Set default tanggal ke hari ini
                 setModalBooking({
                   ...initialModalBooking,
                   bookingDate: new Date().toISOString().slice(0, 10),
@@ -385,6 +293,7 @@ const BookingManagement = () => {
               Add New
             </button>
           </div>
+          {/* Tabel */}
           <div className="overflow-x-auto shadow-lg">
             <table className="w-full text-sm text-left text-gray-700">
               <thead className="text-sm text-gray-700 uppercase bg-white">
@@ -433,9 +342,11 @@ const BookingManagement = () => {
                       {getRoomName(booking.roomId)}
                     </td>
                     <td className="px-4 py-2 text-center">
-                      {new Date(booking.bookingDate).toLocaleDateString("id-ID")}
+                      {new Date(booking.bookingDate).toLocaleDateString(
+                        "id-ID"
+                      )}
                     </td>
-                    <td className="px-4 py-2 text-center">
+                    <td className="px-4 py-2 text-left">
                       {getUserName(booking.bookedBy)}
                     </td>
                     <td className="px-4 py-2 text-center">
@@ -444,8 +355,8 @@ const BookingManagement = () => {
                         currency: "IDR",
                       }).format(booking.price)}
                     </td>
-                    <td className="px-4 py-2 text-center">
-                      <div className="flex flex-col space-y-1">
+                    <td className="px-2 py-2 text-center">
+                      <div className="flex flex-row space-x-2">
                         <button
                           onClick={() => {
                             setModalBooking(booking);
@@ -469,6 +380,7 @@ const BookingManagement = () => {
               </tbody>
             </table>
           </div>
+          {/* Pagination */}
           <div className="flex justify-center items-center mt-4 space-x-2">
             <button
               onClick={() => setCurrentPage(currentPage - 1)}
@@ -499,7 +411,7 @@ const BookingManagement = () => {
             </button>
           </div>
         </div>
-
+        {/* Modal untuk Tambah/Edit Booking */}
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-96">
@@ -511,13 +423,12 @@ const BookingManagement = () => {
                   <label className="block text-sm font-medium">Room</label>
                   <select
                     value={modalBooking.roomId}
-                    onChange={(e) => {
+                    onChange={(e) =>
                       setModalBooking({
                         ...modalBooking,
                         roomId: Number(e.target.value),
-                      });
-                      setFormErrors((prev) => ({ ...prev, roomId: "" }));
-                    }}
+                      })
+                    }
                     className="w-full border p-2 rounded"
                     required
                   >
@@ -530,13 +441,7 @@ const BookingManagement = () => {
                       </option>
                     ))}
                   </select>
-                  {formErrors.roomId && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.roomId}
-                    </p>
-                  )}
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium">
                     Booking Date
@@ -544,43 +449,26 @@ const BookingManagement = () => {
                   <input
                     type="date"
                     value={modalBooking.bookingDate}
-                    onChange={(e) => {
+                    onChange={(e) =>
                       setModalBooking({
                         ...modalBooking,
                         bookingDate: e.target.value,
-                      });
-                      setFormErrors((prev) => ({
-                        ...prev,
-                        bookingDate: "",
-                      }));
-                    }}
+                      })
+                    }
                     className="w-full border p-2 rounded"
                     required
-                    min={new Date().toISOString().split("T")[0]}
                   />
-                  {formErrors.bookingDate && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.bookingDate}
-                    </p>
-                  )}
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium">
-                    Booked By
-                  </label>
+                  <label className="block text-sm font-medium">Booked By</label>
                   <select
                     value={modalBooking.bookedBy}
-                    onChange={(e) => {
+                    onChange={(e) =>
                       setModalBooking({
                         ...modalBooking,
                         bookedBy: Number(e.target.value),
-                      });
-                      setFormErrors((prev) => ({
-                        ...prev,
-                        bookedBy: "",
-                      }));
-                    }}
+                      })
+                    }
                     className="w-full border p-2 rounded"
                     required
                   >
@@ -593,13 +481,7 @@ const BookingManagement = () => {
                       </option>
                     ))}
                   </select>
-                  {formErrors.bookedBy && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {formErrors.bookedBy}
-                    </p>
-                  )}
                 </div>
-
                 <div className="flex justify-end space-x-2">
                   <button
                     type="button"
