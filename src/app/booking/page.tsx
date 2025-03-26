@@ -290,7 +290,7 @@ const BookingManagement = () => {
               }}
               className="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
             >
-              Add New
+              Add New Booking
             </button>
           </div>
           {/* Tabel */}
@@ -302,7 +302,7 @@ const BookingManagement = () => {
                     onClick={() => handleSort("id")}
                     className="px-6 py-3 text-center cursor-pointer select-none"
                   >
-                    ID {renderSortIndicator("id")}
+                     No {renderSortIndicator("id")}
                   </th>
                   <th
                     onClick={() => handleSort("room")}
