@@ -11,7 +11,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     // Panggil API Login di sini...
     const success = true; // simulasi sukses login
-    const user = "Muhamad Ali"; // username dari respon backend
+    const user = username; // username dari respon backend
 
     if (success) {
       localStorage.setItem("username", user);

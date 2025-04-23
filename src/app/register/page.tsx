@@ -10,8 +10,14 @@ export default function Register() {
 
   const handleRegister = () => {
     if (username && password) {
+      // Simpan username ke localStorage
+      localStorage.setItem("username", username);
+
+      // Memicu event agar navbar mengetahui status login yang baru
+      window.dispatchEvent(new Event("storage"));
+
       alert(`Registered successfully as ${username}`);
-      router.push("/dashboard"); // Redirect ke halaman login
+      router.push("/dashboard"); // Langsung redirect ke dashboard
     } else {
       alert("Please enter both username and password.");
     }
@@ -19,7 +25,7 @@ export default function Register() {
 
   return (
     <div className="flex justify-center items-center h-screen">
-      <div className="bg-gray-800 p-8 rounded-lg shadow-lg">
+      <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-80">
         <h2 className="text-2xl font-bold text-white mb-4">Register</h2>
         <input
           type="text"
@@ -37,7 +43,7 @@ export default function Register() {
         />
         <button
           onClick={handleRegister}
-          className="bg-green-500 text-white p-2 rounded-md w-full"
+          className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-md w-full"
         >
           Register
         </button>
