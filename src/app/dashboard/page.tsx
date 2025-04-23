@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation'; // Import useRouter untuk redirect
 import { useState, useEffect } from 'react'; // Import useEffect untuk cek status login
 import {
   Chart as ChartJS,
@@ -25,6 +26,16 @@ export default function Dashboard() {
     }
   }, []);
 
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    console.log("TOKEN:", token); // debug
+    if (!token) {
+      router.push('/login');
+    }
+  }, []);
+  
   // Data for Monthly Revenue Bar Chart
   const barChartData = {
     labels: ['January', 'February', 'March', 'April', 'May', 'June'],
