@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Import useEffect untuk cek status login
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -16,6 +16,15 @@ import Link from 'next/link';
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 export default function Dashboard() {
+  // Cek status login saat halaman dimuat
+  useEffect(() => {
+    const username = localStorage.getItem("username");
+    if (!username) {
+      alert("You need to login first!");
+      window.location.href = "/login"; // Redirect ke halaman login jika belum login
+    }
+  }, []);
+
   // Data for Monthly Revenue Bar Chart
   const barChartData = {
     labels: ['January', 'February', 'March', 'April', 'May', 'June'],
@@ -28,7 +37,6 @@ export default function Dashboard() {
       },
     ],
   };
-
   const barChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -70,7 +78,6 @@ export default function Dashboard() {
       },
     ],
   };
-
   const pieChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
