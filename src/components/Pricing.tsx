@@ -1,101 +1,54 @@
-import Image from "next/image";
-import Check from "../../public/assets/check.svg";
-import CheckWhite from "../../public/assets/check-white.svg";
-const Pricing = () => {
-  return (
-    <div className="px-5 lg:px-0 lg:container pt-14 sm:pt-32 mb-11" id="pricing">
-      <h1 className="text-[#172026] text-[24px] font-medium text-center mb-4">
-        Flexible plans for you
-      </h1>
-      <p className="text-center text-[#36485C] text-[16px] mb-10">
-        No hidden fees!
-      </p>
-      <div className="flex flex-col lg:flex-row gap-y-7 lg:gap-x-6">
-        <div className="w-full bg-[#F5F4FF] p-6 rounded flex flex-col lg:justify-between">
-          <div>
-          <h1 className="text-[#4328EB] text-[18px] mb-3 font-medium">
-            Free Trial
-          </h1>
-          <p className="text-[#36485C] text-[16px] mb-3 font-medium">
-            Perfect for testing the waters
-          </p>
-          <h1 className="text-[#172026] text-[24px] mb-3 font-medium">
-            $0 <span className="text-[#5F7896]">/mo</span>
-          </h1>
-          <ul className="space-y-2">
-            <li className="flex items-center gap-4 text-[16px] lg:text-[18px] text-primary">
-              <Image src={Check} alt="check" /> Lorem ipsum dolor sit amet
-            </li>
-            <li className="flex items-center gap-4 text-[16px] lg:text-[18px] text-primary">
-              <Image src={Check} alt="check" /> Consectetur adipiscing elit
-            </li>
-            <li className="flex items-start gap-4 text-[16px] lg:text-[18px] text-primary">
-              <Image src={Check} alt="check" /> Sed do eiusmod tempor incididunt
-              ut labore{" "}
-            </li>
-          </ul>
-          </div>
-          <button className="text-[#4328EB] text-[16px] font-medium bg-[#fff] py-[14px] w-full mt-7">
-            Start Trial
-          </button>
-        </div>
-        <div className="w-full bg-[#4328EB] p-6 rounded flex flex-col lg:justify-between">
-          <div>
-          <h1 className="text-[#FFFFFF] text-[18px] mb-3 font-medium">
-            Business
-          </h1>
-          <p className="text-[#F4F8FA] text-[16px] mb-3 font-medium">
-            Perfect for testing the waters
-          </p>
-          <h1 className="text-[#FFFFFF] text-[24px] mb-3 font-medium">
-            $500 <span className="text-[#F4F8FA]">/mo</span>
-          </h1>
-          <ul className="space-y-2">
-            <li className="flex items-center gap-4 text-[16px] lg:text-[18px] text-[#F4F8FA]">
-              <Image src={CheckWhite} alt="check" /> Lorem ipsum dolor sit amet
-            </li>
-            <li className="flex items-center gap-4 text-[16px] lg:text-[18px] text-[#F4F8FA]">
-              <Image src={CheckWhite} alt="check" /> Consectetur adipiscing elit
-            </li>
-            <li className="flex items-start gap-4 text-[16px] lg:text-[18px] text-[#F4F8FA]">
-              <Image src={CheckWhite} alt="check" /> Sed do eiusmod tempor
-              incididunt ut labore{" "}
-            </li>
-          </ul>
-          </div>
-          <button className="text-[#4328EB] text-[16px] font-medium bg-[#fff] py-[14px] w-full mt-7">
-            Get Started
-          </button>
-        </div>
-        <div className="w-full h-full relative bg-[#F5F4FF] p-6 rounded flex flex-col lg:justify-between">
-          <div>
-            <h1 className="text-[#4328EB] text-[18px] mb-3 font-medium">
-              Enterprise
-            </h1>
-            <p className="text-[#36485C] text-[16px] mb-3 font-medium">
-              Perfect for testing the waters
-            </p>
-            <h1 className="text-[#172026] text-[24px] mb-3 font-medium">
-              Custom <span className="text-[#5F7896]"></span>
-            </h1>
-            <p className="text-[16px] text-[#36485C] mb-3">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore.{" "}
-            </p>
+export default function Pricing() {
+  const plans = [
+    {
+      name: "Standar",
+      price: "$150",
+      features: ["Kamar Deluxe", "Wi-Fi Gratis", "Sarapan Dasar"],
+      cta: "Pilih Paket",
+      highlight: false,
+    },
+    {
+      name: "Premium",
+      price: "$250",
+      features: ["Kamar Suite", "Wi-Fi Premium", "Sarapan Lengkap", "Akses Spa"],
+      cta: "Paling Populer",
+      highlight: true,
+    },
+    {
+      name: "VIP",
+      price: "$400",
+      features: ["Suite Presiden", "Wi-Fi Prioritas", "Sarapan & Makan Malam", "Spa Full Akses", "Antar-Jemput"],
+      cta: "Pesan Sekarang",
+      highlight: false,
+    },
+  ];
 
-            <p className="text-[16px] text-[#36485C]">
-              Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit
-              aut fugit. Lorem ipsum dolor sit amet, consectetur adipiscing
-              elit.
-            </p>
-          </div>
-          <button className="text-[#4328EB] text-[16px] font-medium bg-[#fff] py-[14px] w-full mt-7">
-            Start Trial
-          </button>
+  return (
+    <section className="py-20 bg-gray-50">
+      <div className="max-w-6xl mx-auto px-6">
+        <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Paket Menginap</h2>
+        <div className="grid md:grid-cols-3 gap-10">
+          {plans.map((plan, idx) => (
+            <div key={idx} className={`rounded-lg overflow-hidden shadow-lg transition transform hover:scale-105 ${plan.highlight ? 'ring-2 ring-gray-700' : ''}`}>
+              <div className="bg-white p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{plan.name}</h3>
+                <p className="text-3xl font-bold text-gray-800 mb-4">{plan.price}<span className="text-sm text-gray-500">/malam</span></p>
+                <ul className="text-gray-600 mb-6 space-y-2">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center">
+                      <span className="mr-2 text-green-500">✔</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <button className={`w-full py-3 rounded-full ${plan.highlight ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-900'} font-semibold`}>
+                  {plan.cta}
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-    </div>
+    </section>
   );
-};
-
-export default Pricing;
+}

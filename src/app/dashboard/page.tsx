@@ -17,24 +17,6 @@ import Link from 'next/link';
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 export default function Dashboard() {
-  // Cek status login saat halaman dimuat
-  useEffect(() => {
-    const username = localStorage.getItem("username");
-    if (!username) {
-      alert("You need to login first!");
-      window.location.href = "/login"; // Redirect ke halaman login jika belum login
-    }
-  }, []);
-
-  const router = useRouter();
-
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    console.log("TOKEN:", token); // debug
-    if (!token) {
-      router.push('/login');
-    }
-  }, []);
   
   // Data for Monthly Revenue Bar Chart
   const barChartData = {

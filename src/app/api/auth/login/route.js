@@ -2,7 +2,7 @@ export async function POST(request) {
     const { username, password, expiresInMins } = await request.json();
   
     try {
-      const response = await fetch('https://dummyjson.com/auth/login', {
+      const response = await fetch('https://simaru.amisbudi.cloud/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

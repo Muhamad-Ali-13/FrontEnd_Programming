@@ -1,4 +1,6 @@
+// app/components/Navbar.tsx
 'use client';
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,16 +12,42 @@ export default function Navbar() {
   const [userData, setUserData] = useState<any>(null);
   const router = useRouter();
 
+  // Cek status login saat komponen mount
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const accessToken = localStorage.getItem('accessToken');
     const user = localStorage.getItem('user');
-    
-    if (accessToken) {
+
+    if (accessToken && user) {
       setIsLoggedIn(true);
-      if (user) {
-        setUserData(JSON.parse(user));
-      }
+      setUserData(JSON.parse(user));
+    } else {
+      setIsLoggedIn(false);
+      setUserData(null);
     }
+  }, []);
+
+  // Update navbar ketika storage berubah
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const accessToken = localStorage.getItem('accessToken');
+      const user = localStorage.getItem('user');
+
+      if (accessToken && user) {
+        setIsLoggedIn(true);
+        setUserData(JSON.parse(user));
+      } else {
+        setIsLoggedIn(false);
+        setUserData(null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const toggleDropdown = () => {
@@ -36,42 +64,42 @@ export default function Navbar() {
     setIsLoggedIn(false);
     setUserData(null);
     setIsAccountDropdownOpen(false);
+    window.dispatchEvent(new Event('storage'));
     router.push('/login');
   };
 
   return (
-    <nav className="bg-gray-800">
+    <nav className="bg-gray-800 text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          
-          {/* Kiri: Logo */}
-          <div className="flex-shrink-0 text-white font-bold">FinWise</div>
+          {/* Logo */}
+          <div className="text-lg font-bold">FinWise</div>
 
-          {/* Tengah: Menu */}
+          {/* Menu Tengah */}
           <div className="hidden md:flex space-x-4 items-center">
             {isLoggedIn ? (
               <>
-                <Link href="/dashboard" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/dashboard" className="hover:bg-gray-700 px-3 py-2 rounded">
                   Dashboard
                 </Link>
-                <Link href="/users" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
-                  User
+                <Link href="/users" className="hover:bg-gray-700 px-3 py-2 rounded">
+                  Users
                 </Link>
-                <Link href="/rooms" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
-                  Room
+                <Link href="/rooms" className="hover:bg-gray-700 px-3 py-2 rounded">
+                  Rooms
                 </Link>
                 <div className="relative">
                   <button
                     onClick={toggleDropdown}
-                    className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                    className="hover:bg-gray-700 px-3 py-2 rounded"
                   >
                     Transaction
                   </button>
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                    <div className="absolute right-0 mt-2 w-40 bg-white text-black rounded shadow z-10">
                       <Link
                         href="/booking"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="block px-4 py-2 hover:bg-gray-100"
                         onClick={() => setIsDropdownOpen(false)}
                       >
                         Booking
@@ -82,26 +110,26 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Link href="/" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/" className="hover:bg-gray-700 px-3 py-2 rounded">
                   Blog
                 </Link>
-                <Link href="/" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/" className="hover:bg-gray-700 px-3 py-2 rounded">
                   About
                 </Link>
-                <Link href="/" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/" className="hover:bg-gray-700 px-3 py-2 rounded">
                   Contact
                 </Link>
               </>
             )}
           </div>
 
-          {/* Kanan: Account / Login Register */}
-          <div className="flex items-center">
+          {/* Tombol Login/Register atau Akun */}
+          <div className="flex items-center space-x-4">
             {isLoggedIn ? (
               <div className="relative">
                 <button
                   onClick={toggleAccountDropdown}
-                  className="flex items-center text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                  className="flex items-center hover:bg-gray-700 px-3 py-2 rounded"
                 >
                   {userData?.image ? (
                     <img
@@ -116,27 +144,27 @@ export default function Navbar() {
                       </span>
                     </div>
                   )}
-                  <span>{userData?.firstName || 'Account'}</span>
+                  <span>{userData?.username }</span>
                 </button>
                 {isAccountDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                  <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded shadow z-10">
                     <Link
                       href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 hover:bg-gray-100"
                       onClick={() => setIsAccountDropdownOpen(false)}
                     >
                       Profile
                     </Link>
                     <Link
                       href="/change-password"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 hover:bg-gray-100"
                       onClick={() => setIsAccountDropdownOpen(false)}
                     >
                       Change Password
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      className="w-full text-left block px-4 py-2 text-red-600 hover:bg-gray-100"
                     >
                       Log Out
                     </button>
@@ -145,10 +173,10 @@ export default function Navbar() {
               </div>
             ) : (
               <>
-                <Link href="/register" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/register" className="hover:bg-gray-700 px-3 py-2 rounded">
                   Register
                 </Link>
-                <Link href="/login" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/login" className="hover:bg-gray-700 px-3 py-2 rounded">
                   Login
                 </Link>
               </>
