@@ -6,6 +6,7 @@ import Cta from "@app/components/Cta";
 import Pricing from "@app/components/Pricing";
 import Footer from "@app/components/Footer";
 
+
 export default function Home() {
   return (
     <>

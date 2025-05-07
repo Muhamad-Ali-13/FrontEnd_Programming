@@ -88,30 +88,7 @@ export default function Dashboard() {
     },
   };
 
-  // Data for Recommended Rooms
-  const recommendedRooms = [
-    {
-      id: 1,
-      name: 'Deluxe Room',
-      image: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$150/night',
-      class: 'Luxury',
-    },
-    {
-      id: 2,
-      name: 'Standard Room',
-      image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$100/night',
-      class: 'Standard',
-    },
-    {
-      id: 3,
-      name: 'Suite Room',
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60',
-      price: '$250/night',
-      class: 'Premium',
-    },
-  ];
+
 
   // Data for Customer Testimonials
   const testimonials = [
@@ -240,9 +217,8 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+     {/* Charts Section */}
+     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Monthly Revenue Bar Chart */}
           <div className="bg-white p-6 rounded-lg shadow-md h-64">
             <Bar data={barChartData} options={barChartOptions} />
@@ -254,148 +230,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Hotel Profile Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">About FinWise Hotel</h2>
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Left Side: Image */}
-            <div className="md:w-1/2">
-              <img
-                src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60"
-                alt="FinWise Hotel"
-                className="w-full h-64 object-cover rounded-md"
-              />
-            </div>
-            {/* Right Side: Text */}
-            <div className="md:w-1/2">
-              <p className="text-gray-600 text-sm mb-4">
-                FinWise Hotel is a luxury hotel located in the heart of the city. Established in 2010, we have been
-                providing exceptional service and unforgettable experiences for our guests. Our hotel features 50
-                beautifully designed rooms, ranging from standard to premium suites, each equipped with modern amenities
-                to ensure your comfort.
-              </p>
-              <p className="text-gray-600 text-sm mb-4">
-                Our commitment to quality is reflected in every aspect of our service. From our 24/7 concierge to our
-                world-class dining options, we strive to exceed your expectations. Whether you're visiting for business or
-                leisure, FinWise Hotel is your perfect destination.
-              </p>
-              <p className="text-gray-600 text-sm">
-                Join us and experience the ultimate in hospitality. We look forward to welcoming you to FinWise Hotel!
-              </p>
-            </div>
-          </div>
-        </div>
 
-        {/* Recommended Rooms Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Recommended Rooms</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recommendedRooms.map((room) => (
-              <div key={room.id} className="bg-gray-50 p-4 rounded-lg shadow-md">
-                <img src={room.image} alt={room.name} className="w-full h-40 object-cover rounded-md mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800">{room.name}</h3>
-                <p className="text-gray-600 text-sm">{room.class}</p>
-                <p className="text-indigo-600 font-bold mt-2">{room.price}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Customer Testimonials Section */}
-        <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Customer Testimonials</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {testimonials.map((testimonial) => (
-              <div key={testimonial.id} className="bg-gray-50 p-4 rounded-lg shadow-md">
-                <div className="flex items-center space-x-4 mb-4">
-                  <img
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{testimonial.name}</h3>
-                  </div>
-                </div>
-                <p className="text-gray-600 text-sm">{testimonial.review}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer Section */}
-        <footer className="bg-gray-800 text-white p-6 rounded-lg shadow-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div>
-                <h3 className="text-lg font-bold mb-2">About Us</h3>
-                <p className="text-sm text-gray-400">
-                  FinWise Hotel is a luxury hotel located in the heart of the city. We provide exceptional service and
-                  unforgettable experiences for our guests.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold mb-2">Contact Us</h3>
-                <p className="text-sm text-gray-400">Email: info@finwisehotel.com</p>
-                <p className="text-sm text-gray-400">Phone: +1 (123) 456-7890</p>
-                <p className="text-sm text-gray-400">Address: 123 Luxury Lane, Cityville</p>
-              </div>
-              <div>
-                <h3 className="text-lg font-bold mb-2">Follow Us</h3>
-                <div className="flex space-x-4">
-                  <Link href="#" className="text-gray-400 hover:text-white transition duration-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"
-                      />
-                    </svg>
-                  </Link>
-                  <Link href="#" className="text-gray-400 hover:text-white transition duration-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"
-                      />
-                    </svg>
-                  </Link>
-                  <Link href="#" className="text-gray-400 hover:text-white transition duration-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                      />
-                    </svg>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </footer>
       </div>
     </div>
   );

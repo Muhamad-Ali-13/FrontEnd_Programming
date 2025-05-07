@@ -1,75 +1,94 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<{
-    username: string;
-    email: string;
-    firstName?: string;
-    lastName?: string;
-  } | null>(null);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const router = useRouter();
+  const [userData, setUserData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Ambil data user dari localStorage
-    const userData = localStorage.getItem("user");
-    if (userData) {
+    const fetchUserProfile = async () => {
       try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error("Failed to parse user data from localStorage", error);
+        // Ambil token dari localStorage
+        const token = localStorage.getItem('accessToken');
+
+        // Cek apakah token ada
+        if (!token) {
+          throw new Error('Token tidak ditemukan. Silakan login kembali.');
+        }
+
+        // Kirim permintaan ke API
+        const response = await fetch('https://simaru.amisbudi.cloud/api/user', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        // Cek apakah server mengarahkan ke halaman login (redireksi ke HTML)
+        if (response.redirected) {
+          window.location.href = response.url; // Arahkan ke halaman login
+          return;
+        }
+
+        // Cek apakah respons bukan JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text(); // Simpan sebagai HTML
+          console.error('Bukan JSON:', text);
+          throw new Error('Respons server bukan JSON (kemungkinan halaman 404 atau login)');
+        }
+
+        // Cek status HTTP
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.message || 'Gagal memuat data profil');
+        }
+
+        // Parsing JSON jika semua valid
+        const data = await response.json();
+        setUserData(data);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setError('Tidak dapat memuat data profil. Silakan coba lagi nanti.');
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, []);
+    };
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
+    fetchUserProfile();
+  }, [router]);
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setMessage("Semua field harus diisi.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setMessage("Password baru dan konfirmasi tidak cocok.");
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setMessage("Password baru minimal 6 karakter.");
-      return;
-    }
-
-    // Contoh logika update password
-    // Di sini kamu bisa ganti dengan API call ke backend
-
-    // Simulasi validasi password lama (hanya demo)
-    const storedPassword = localStorage.getItem("password"); // JANGAN SIMPAN PASSWORD DI LOCAL STORAGE DI PRODUKSI!
-
-    if (currentPassword !== storedPassword) {
-      setMessage("Password lama salah.");
-      return;
-    }
-
-    // Simpan password baru (hanya demo)
-    localStorage.setItem("password", newPassword);
-
-    setMessage("Password berhasil diperbarui!");
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-  };
-
-  if (!user) {
+  // Tampilan saat loading
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center bg-gray-100">
-        <p className="text-gray-700">Memuat data profil...</p>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat profil...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Tampilan jika terjadi error
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-md w-full max-w-md">
+          <h2 className="text-lg font-medium text-red-800">Kesalahan</h2>
+          <p className="mt-2 text-sm text-red-700">{error}</p>
+          <button
+            onClick={() => router.push('/login')}
+            className="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition duration-150"
+          >
+            Kembali ke Login
+          </button>
+        </div>
       </div>
     );
   }
@@ -77,92 +96,48 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Profil Pengguna</h1>
-
-        {/* Data Profil */}
-        <div className="bg-white rounded-2xl shadow p-6 space-y-6">
-          <div>
-            <h2 className="text-lg font-medium text-gray-700">Nama Lengkap</h2>
-            <p className="text-gray-900">{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : "Muhamad Ali"}</p>
+        <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+          {/* Header Profil */}
+          <div className="bg-gray-800 px-6 py-8 text-white">
+            <h1 className="text-2xl font-bold">Profil Pengguna</h1>
+            <p className="text-gray-200">Kelola informasi akun Anda</p>
           </div>
 
-          <div>
-            <h2 className="text-lg font-medium text-gray-700">Username</h2>
-            <p className="text-gray-900">{user.username || "username" }</p>
-          </div>
-
-          <div>
-            <h2 className="text-lg font-medium text-gray-700">Email</h2>
-            <p className="text-gray-900">{user.email || "password"}</p>
-          </div>
-        </div>
-
-        {/* Form Ganti Password */}
-        <div className="mt-10 bg-white rounded-2xl shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Ganti Password</h2>
-          <form onSubmit={handlePasswordChange} className="space-y-4">
-            <div>
-              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
-                Password Lama
-              </label>
-              <input
-                id="currentPassword"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Masukkan password lama"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                Password Baru
-              </label>
-              <input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Masukkan password baru"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Konfirmasi Password
-              </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Konfirmasi password baru"
-              />
-            </div>
-
-            {message && (
-              <p className={`text-sm ${message.includes("berhasil") ? "text-green-600" : "text-red-600"}`}>
-                {message}
-              </p>
+          {/* Konten Profil */}
+          <div className="p-6 space-y-6">
+            {error && (
+              <div className="bg-red-50 text-red-500 px-4 py-3 rounded relative" role="alert">
+                <span className="block sm:inline">{error}</span>
+              </div>
             )}
 
-            <button
-              type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition duration-200"
-            >
-              Simpan Perubahan
-            </button>
-          </form>
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h2 className="text-sm font-medium text-gray-500 mb-1">Nama Lengkap</h2>
+                <p className="text-gray-800">{userData?.name || 'Data tidak tersedia'}</p>
+              </div>
 
-        {/* Back to Dashboard */}
-        <div className="mt-6 text-right">
-          <Link href="/dashboard" className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
-            ← Kembali ke Dashboard
-          </Link>
+              <div>
+                <h2 className="text-sm font-medium text-gray-500 mb-1">Email</h2>
+                <p className="text-gray-800">{userData?.email || 'Data tidak tersedia'}</p>
+              </div>
+
+              <div>
+                <h2 className="text-sm font-medium text-gray-500 mb-1">Role</h2>
+                <p className="text-gray-800 capitalize">{userData?.role || 'Data tidak tersedia'}</p>
+              </div>
+
+              <div>
+                <h2 className="text-sm font-medium text-gray-500 mb-1">Tanggal Registrasi</h2>
+                <p className="text-gray-800">
+                  {userData?.created_at 
+                    ? new Date(userData.created_at).toLocaleDateString('id-ID') 
+                    : 'Data tidak tersedia'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
